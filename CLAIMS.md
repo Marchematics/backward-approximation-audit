@@ -28,6 +28,10 @@ numbers are the exception and are labelled as such.
 | A15 | Within one optimizer it moves with state age: Lion proportional 0.78 (warmup 5) -> 2.95 (40) -> 3.06 (120); Adam 0.077 -> 0.126; SGD *falls* 0.081 -> 0.013 | `results/e18_warm5.json`, `results/e18_warm120.json` | same script with `--warmup 5` / `--warmup 120` |
 | A16 | The ordering survives scale on a real checkpoint: Llama-3.2-1B gives SGD 0.263, AdamW 0.228 (orthogonal 1.48), Lion 1.264 (orthogonal 2.68) | `results/e18_1b_final.json` | `... --pretrained --bs 1 --block 512 --lr 1e-5` |
 
+| A17 | **Sparsity cost is optimizer-dependent**: held-out cost at 5% density is +0.065 (AdamW), +0.112 (SGD), +0.311 (Lion) -- Lion pays 4.8x AdamW, each at its own calibrated lr | `results/e19_optimizer_density.json` | `python3 experiments/e19_optimizer_density.py --device cuda --steps 600 --lr-map sgd=3e-4,adamw=2e-4,lion=1e-4` |
+| A18 | The step-norm diagnostic does **not** explain damage across optimizers: at 5% density Lion's norm ratio is 0.833 and its cost +0.311, while AdamW's is 0.519 and its cost +0.065 | same file | same command |
+| A19 | **A real end-to-end speedup**: backward through the last 3 of 6 blocks, embedding/head trained, step norm corrected -> 1.60-1.79x wall-clock for +0.003 held-out loss at equal steps; last 2 of 6 -> 2.09-2.13x for +0.009 | `results/e20.json`, `results/e20_seed1.json`, `results/e20_seed2.json`, `results/e20_keep2.json` | `python3 experiments/e20_realskip.py --device cuda --steps 300 --keep-blocks 3` |
+
 ## B. Falsified (kept on purpose)
 
 | # | hypothesis | how it died | evidence |
@@ -39,6 +43,7 @@ numbers are the exception and are labelled as such.
 | F5 | Freezing the moments outside the mask restores quality | restores the norm (726 vs 872) and makes quality worse: 16% closed vs 55% | `results/e11_step_controller.json` |
 | F6 | A scalar step-norm ratio ranks mechanism quality | `rand_elem` (0.645) costs 3x `sparse_block` (0.747); `lowrank_down` (1.131) costs 25x `lowrank_row` (0.999) | `results/e14_diagnostic_table.json` |
 | F7 | Pinning the embedding is what makes block dropping work | an experimental bug had been dropping the embedding in the control arms; after the fix the effect mostly disappears (A11) | `docs/WHY_MEASUREMENTS_DISAGREE.md` |
+| F8 | The step-norm ratio predicts a scheme's quality cost across settings | it ranks mechanisms within one optimizer but inverts across optimizers: Lion moves its norm least and loses the most (A18) | `results/e19_optimizer_density.json` |
 
 ## C. Open, with the run that would close it
 
@@ -48,5 +53,6 @@ numbers are the exception and are labelled as such.
 | O2 | Is DropBP's sensitivity criterion measurably better when the sensitivity spread is large? | here the spread was 25% across six blocks, which makes the test weak | a deeper model (24+ blocks) where sensitivity varies by >2x |
 | O3 | ~~Does any of this hold for SGD or Lion?~~ **answered (A14-A16)**: the structure is optimizer- and state-dependent, so the framing survives | measured 200x spread across optimizers | done |
 | O6 | Do the sparsity/density cost curves (A5, A6) differ under Lion? | A14 predicts they must: a 5% budget that is nearly free under SGD should be far more damaging under Lion, which no paper in the sparsity literature reports | rerun E9 with the optimizer as a variable |
-| O4 | Can a real kernel realise the 1.63x truncated-backward saving inside a training loop? | A8 measured the graph saving on a microbenchmark, not in a full step with a scheduler | fused block-dropping kernel + end-to-end step timing |
+| O4 | ~~Can the truncated-backward saving be realised inside a training loop?~~ **answered (A19)**: yes, 1.60-2.13x at a measured +0.003 to +0.009 held-out cost | done, on a 40 M model and a byte-level corpus | remaining: scale it to a real tokenizer and a 1B model |
+| O7 | Does the Lion penalty (A17) hold at scale and on a real tokenizer? | this is the claim most likely to change practice, and it rests on one 40 M byte-level run | rerun E19 on a 1B pretrained checkpoint with a real tokenizer |
 | O5 | Does the quality-neutral point move with model scale and task? | the 5%/20%/50% cost curve is one corpus and one architecture | repeat A6 at two model sizes and a second corpus |

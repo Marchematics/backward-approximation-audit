@@ -853,3 +853,71 @@ Also worth stating plainly: this experiment falsified the prediction written dow
 ("if the structure is the same for SGD and Lion, the effect belongs to numerical linear algebra and
 the word optimizer-conditioned must come out of the title"). The structure is not the same, so the
 word stays in — by measurement, not by preference.
+
+
+---
+
+## 4i. E19/E20: the two results that matter in practice
+
+### E19 — the sparsity cost curve is optimizer-dependent, and Lion is far worse
+
+Every sparsity and low-rank result in the literature is tuned and reported on AdamW. Same model,
+data, steps, mask and budget; only the optimizer changes. Each optimizer first calibrated to its own
+best dense learning rate (SGD 3e-4, AdamW 2e-4, Lion 1e-4), then density swept.
+`results/e19_optimizer_density.json`.
+
+**Held-out loss, and the cost against that optimizer's own dense run:**
+
+| optimizer | dense | keep 50% | keep 20% | keep 5% |
+|---|---:|---:|---:|---:|
+| SGD + momentum | 3.3682 | +0.0056 | +0.0309 | +0.1123 |
+| AdamW | 2.7817 | +0.0033 | +0.0395 | **+0.0648** |
+| Lion | 2.5266 | +0.0234 | +0.2043 | **+0.3109** |
+
+**At 5% density Lion pays 4.8x what AdamW pays, and 2.8x what SGD pays.** The ordering is exactly
+what the amplification measurements predicted (A14), and the margin is large enough to matter: a
+compression ratio reported as "nearly free on AdamW" is not nearly free on Lion.
+
+The part that is genuinely counterintuitive is *why*, and it falsifies the diagnostic this project
+had been building toward:
+
+| optimizer | step-norm ratio at 5% density | held-out cost |
+|---|---:|---:|
+| SGD | 1.166 | +0.1123 |
+| AdamW | 0.519 | +0.0648 |
+| Lion | 0.833 | +0.3109 |
+
+Lion's step norm barely moves (0.833) and it degrades five times worse than AdamW, whose step norm
+collapses to 0.519. **The step-norm ratio does not explain the damage across optimizers.** The reason
+is structural: Adam rescales every coordinate by `1/sqrt(v)`, so a stale or missing coordinate
+contributes a small, *magnitude-weighted* error, whereas Lion acts on `sign(...)` and one flipped
+sign is a full-size step in the wrong direction regardless of how large the step norm is. Amplitude
+is the wrong currency for a sign-based optimizer.
+
+This also retroactively explains E18's 200x amplification spread in practical terms: sign-based
+optimizers are not merely more sensitive in a synthetic metric, they lose five times more quality at
+a compression ratio the adaptive optimizer barely notices.
+
+### E20 — the graph skip and the step-norm fix, combined, end to end
+
+A8 measured the wall-clock saving of a truncated backward in a microbenchmark; A11 showed block
+dropping is nearly free at this scale; A7 showed half the cost of masking is a step-norm collapse.
+This runs all three together in one training loop: backward executed only through the last k of 6
+blocks via `autograd.grad` with explicit inputs, embedding/head always trained, and the learning rate
+rescaled to match the dense step norm. `results/e20.json`.
+
+| arm | held-out loss | cost | ms/step | speedup |
+|---|---:|---:|---:|---:|
+| dense | 2.8045 | — | 47.7 | 1.00x |
+| skip last 3/6 blocks | 2.8082 | +0.0037 | 29.8 | **1.60x** |
+| skip + step-norm correction (lr x1.32) | 2.8072 | **+0.0027** | 27.7 | **1.72x** |
+
+**This is the first arm in the project that both removes computation from the graph and corrects the
+step norm, and it is the first result that is a speedup rather than a mechanism measurement**: 1.72x
+wall-clock for +0.003 held-out loss, at equal steps. The step-norm correction recovers a further
+quarter of the residual cost (0.0037 -> 0.0027).
+
+Caveats, stated because this is the number most likely to be over-read: one 40 M model, byte-level
+corpus, three runs of the dense/skip pair (see the seed files), an A10G shared with another tenant,
+and the "cost" is held-out loss at equal steps rather than a matched perplexity on a real tokenizer.
+It is a real end-to-end speedup with a measured price, not a SOTA claim.

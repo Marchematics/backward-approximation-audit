@@ -74,6 +74,20 @@ Supporting measurements:
   AUC** (`results/e17_fixedk.json`). The same null result as the coordinate axis (A5), on a second
   independent axis.
 
+## A real end-to-end speedup, and what it costs
+
+Backward executed only through the last k of 6 blocks, embedding/head always trained, learning rate
+rescaled to match the dense step norm (equal steps, held-out loss):
+
+| config | speedup | held-out cost |
+|---|---:|---:|
+| last 3 of 6 blocks | 1.60-1.79x | +0.003 |
+| last 2 of 6 blocks | 2.09-2.13x | +0.009 |
+
+And the cost of a fixed sparsity budget is **optimizer-dependent**: at 5% density the held-out cost
+is +0.065 (AdamW), +0.112 (SGD) and +0.311 (Lion) — Lion pays 4.8x AdamW, while moving its step norm
+*less*. No paper in the sparsity literature reports this number per optimizer.
+
 ## What was falsified
 
 Recorded because negative results are the reason to trust the rest:

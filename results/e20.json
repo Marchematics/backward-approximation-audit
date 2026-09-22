@@ -1,0 +1,54 @@
+{
+  "config": {
+    "steps": 300,
+    "warmup": 20,
+    "val_batches": 8,
+    "bs": 8,
+    "block": 256,
+    "ctx": 256,
+    "dim": 384,
+    "layers": 6,
+    "heads": 6,
+    "lr": 0.0002,
+    "b1": 0.9,
+    "b2": 0.95,
+    "keep_blocks": 3,
+    "chars": 60000000,
+    "device": "cuda",
+    "wait_free_gb": 1.5,
+    "reps": 1,
+    "out": "/root/qcc/review20260922/e20.json"
+  },
+  "arms": {
+    "dense": {
+      "arm": "dense",
+      "k_keep": 3,
+      "lr_scale": 1.0,
+      "auc": 2.7571,
+      "val_loss": 2.8045,
+      "median_step_ms": 47.73,
+      "median_upd_norm": 884.275,
+      "final_loss": 2.6097
+    },
+    "skip": {
+      "arm": "skip",
+      "k_keep": 3,
+      "lr_scale": 1.0,
+      "auc": 2.7996,
+      "val_loss": 2.8082,
+      "median_step_ms": 29.84,
+      "median_upd_norm": 667.716,
+      "final_loss": 2.6062
+    },
+    "skip_cal": {
+      "arm": "skip_cal",
+      "k_keep": 3,
+      "lr_scale": 1.3243280077158552,
+      "auc": 2.765,
+      "val_loss": 2.8072,
+      "median_step_ms": 27.73,
+      "median_upd_norm": 643.425,
+      "final_loss": 2.6049
+    }
+  }
+}
