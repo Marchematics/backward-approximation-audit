@@ -921,3 +921,74 @@ Caveats, stated because this is the number most likely to be over-read: one 40 M
 corpus, three runs of the dense/skip pair (see the seed files), an A10G shared with another tenant,
 and the "cost" is held-out loss at equal steps rather than a matched perplexity on a real tokenizer.
 It is a real end-to-end speedup with a measured price, not a SOTA claim.
+
+
+---
+
+## 5b. Retraction and correction: the E20 speedup claim was partly wrong
+
+Two defects in the E20 build, both found by review and both confirmed by measurement rather than
+argument. `experiments/e21_grad_reach.py`, `experiments/e22_realskip_fixed.py`;
+`results/e21_grad_reach.json`, `results/e22_realskip_fixed.json`.
+
+**Defect 1 — the skip arm was freezing the embedding tables.** E20 built the prefix forward inside
+`torch.no_grad()` and detached the boundary before `autograd.grad(..., allow_unused=True)`. E21
+measured the consequence directly, per parameter:
+
+| path | parameters receiving NO gradient |
+|---|---|
+| dense | none |
+| E20 skip | **`tok.weight`, `pos.weight`** |
+
+So the arm advertised as "embedding/head always trained" was training the head and freezing the two
+tables that carry ~48% of the gradient mass (A10). `allow_unused=True` swallowed the None silently.
+
+**Defect 2 — the three "seed" runs were three identical runs.** `--seed` was never threaded into
+`run()`; every call passed `seed=0`. The "identical quality numbers across seeds" reported earlier
+were therefore not replication at all. In the corrected build the seeds are genuinely independent:
+dense held-out loss is 2.7108 / 2.5603 / 2.5388 for seeds 0/1/2.
+
+### The correction, and why it costs the speedup
+
+A single autograd pass cannot both skip the prefix backward and deliver the prefix's gradients: once
+the boundary is detached, the prefix graph is gone, and seeding a second backward with a scalar
+cotangent is not the same thing as seeding it with the cotangent of the input. The construction that
+does work is checkpoint-style replay — run the prefix forward without a graph, backward the suffix,
+then replay the prefix forward *with* grad and backprop that, seeded by the stored boundary cotangent.
+
+`e22_realskip_fixed.py` implements both, with `--verify-grads` asserting which parameters end a step
+without a gradient:
+
+| arm | params w/o grad | held-out cost (mean of 3 seeds) | wall-clock |
+|---|---:|---:|---:|
+| dense | 0 | — | 1.00x |
+| skip (E20's actual mechanism) | **38** | +0.0087 | **1.72x** |
+| skip_ri (replay, correct gradients) | **0** | +0.0077 | **0.82x** |
+
+**The corrected method is not a speedup — it is slower than dense (0.82x).** Replay costs a forward
+pass where the baseline pays a backward, and the measured forward:backward ratio in this model does
+not leave room for that trade to pay (A8 prices the same ratio). What survives from E20 is narrower
+and now honest:
+
+* `skip` genuinely gives **1.72x** on three independent seeds (1.64 / 1.89 / 1.63), at a measured
+  **+0.0087** held-out cost — but it is **not** a method that trains every parameter. It is the
+  DropBP-class trade: drop backward work, drop those parameters' updates, and pay in quality.
+* every mechanism in this project that removes backward work *and* keeps all gradients current is
+  slower than dense. The two goals are in direct conflict at this scale, which is itself a result:
+  it explains why the published layer-dropping methods all accept the frozen-parameter trade.
+
+The earlier sentence in this document — "the first arm that both removes computation from the graph
+and corrects the step norm" — is withdrawn: that arm did not deliver gradients to the embedding, so
+it was not the thing it claimed to be. The claim ledger rows V18/V23 and A19 have been rewritten
+accordingly, and F9 records the invalidated claim.
+
+### What this implies for the paper
+
+The system story cannot be "we skip backward and stay quality-neutral". The honest versions are:
+
+1. **The DropBP-class trade, quantified more carefully than before**: 1.72x for +0.0087, with the
+   frozen-parameter scope stated explicitly rather than papered over.
+2. **A gradient-compensation variant** that keeps every parameter's update current *without* a
+   replay forward — e.g. carry the dropped blocks' optimizer state forward with a cheap estimate
+   rather than a recomputation. That is the open systems question, and E22 shows the obvious
+   construction (replay) does not work.

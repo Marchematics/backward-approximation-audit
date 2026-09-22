@@ -256,6 +256,8 @@ def main():
             out["grid"][o][str(d)] = r
             print(f"[e19] {o:<6} keep {d:<5} auc {r['auc']:.4f} val {r['val_loss']:.4f} "
                   f"||dtheta|| {r['median_upd_norm']}", flush=True)
+            with open(args.out + ".partial", "w") as fh:
+                json.dump(out, fh, indent=2)
 
     print("\n[e19] held-out loss by optimizer and density (lower is better)")
     header = "optimizer".ljust(10) + "".join(f"{('keep '+str(d)):>12}" for d in densities)

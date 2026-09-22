@@ -74,15 +74,23 @@ Supporting measurements:
   AUC** (`results/e17_fixedk.json`). The same null result as the coordinate axis (A5), on a second
   independent axis.
 
-## A real end-to-end speedup, and what it costs
+## A real end-to-end speedup, and its honest scope (corrected)
 
-Backward executed only through the last k of 6 blocks, embedding/head always trained, learning rate
-rescaled to match the dense step norm (equal steps, held-out loss):
+Backward executed only through the last 3 of 6 blocks. Three genuinely independent seeds, equal
+steps, held-out loss:
 
-| config | speedup | held-out cost |
-|---|---:|---:|
-| last 3 of 6 blocks | 1.60-1.79x | +0.003 |
-| last 2 of 6 blocks | 2.09-2.13x | +0.009 |
+| arm | params without gradient | held-out cost | speedup |
+|---|---:|---:|---:|
+| dense | 0 | — | 1.00x |
+| skip | **38** | +0.0087 | **1.72x** (1.64/1.89/1.63) |
+| skip + checkpoint-style replay | **0** | +0.0077 | 0.82x |
+
+An earlier version of this table claimed 1.72x at +0.003 "with the embedding always trained". That
+was wrong on both counts and is retracted: the prefix forward ran under `no_grad`, so the token and
+position tables silently received no gradient, and the three "seed" runs were identical. **Making
+the skip gradient-correct costs the speedup entirely** — replay pays a forward where dense pays a
+backward. The tension between skipping backward work and keeping every parameter's update current is
+the real open systems problem here (see `docs/WHY_MEASUREMENTS_DISAGREE.md` and CLAIMS F9).
 
 And the cost of a fixed sparsity budget is **optimizer-dependent**: at 5% density the held-out cost
 is +0.065 (AdamW), +0.112 (SGD) and +0.311 (Lion) — Lion pays 4.8x AdamW, while moving its step norm

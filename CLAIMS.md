@@ -30,7 +30,9 @@ numbers are the exception and are labelled as such.
 
 | A17 | **Sparsity cost is optimizer-dependent**: held-out cost at 5% density is +0.065 (AdamW), +0.112 (SGD), +0.311 (Lion) -- Lion pays 4.8x AdamW, each at its own calibrated lr | `results/e19_optimizer_density.json` | `python3 experiments/e19_optimizer_density.py --device cuda --steps 600 --lr-map sgd=3e-4,adamw=2e-4,lion=1e-4` |
 | A18 | The step-norm diagnostic does **not** explain damage across optimizers: at 5% density Lion's norm ratio is 0.833 and its cost +0.311, while AdamW's is 0.519 and its cost +0.065 | same file | same command |
-| A19 | **A real end-to-end speedup**: backward through the last 3 of 6 blocks, embedding/head trained, step norm corrected -> 1.60-1.79x wall-clock for +0.003 held-out loss at equal steps; last 2 of 6 -> 2.09-2.13x for +0.009 | `results/e20.json`, `results/e20_seed1.json`, `results/e20_seed2.json`, `results/e20_keep2.json` | `python3 experiments/e20_realskip.py --device cuda --steps 300 --keep-blocks 3` |
+| A19 | **RETRACTED — see F9.** The E20 speedup was measured on an arm that silently froze the token/position embeddings and whose three "seed" runs were identical | `results/e21_grad_reach.json` | `python3 experiments/e21_grad_reach.py --device cuda` |
+| A20 | **Corrected speedup, honest scope**: backward through the last 3 of 6 blocks, giving 1.72x on three genuinely independent seeds (1.64/1.89/1.63) at +0.0087 held-out cost — but 38 parameters (the token/position tables and the dropped blocks) receive no update | `results/e22_realskip_fixed.json` | `python3 experiments/e22_realskip_fixed.py --device cuda --steps 300 --seeds 0,1,2 --verify-grads` |
+| A21 | **Making the skip gradient-correct removes the speedup**: checkpoint-style replay trains every parameter (0 without gradient) but runs at 0.82x, slower than dense, because replay costs a forward where the baseline pays a backward | same file | same command |
 
 ## B. Falsified (kept on purpose)
 
@@ -44,6 +46,7 @@ numbers are the exception and are labelled as such.
 | F6 | A scalar step-norm ratio ranks mechanism quality | `rand_elem` (0.645) costs 3x `sparse_block` (0.747); `lowrank_down` (1.131) costs 25x `lowrank_row` (0.999) | `results/e14_diagnostic_table.json` |
 | F7 | Pinning the embedding is what makes block dropping work | an experimental bug had been dropping the embedding in the control arms; after the fix the effect mostly disappears (A11) | `docs/WHY_MEASUREMENTS_DISAGREE.md` |
 | F8 | The step-norm ratio predicts a scheme's quality cost across settings | it ranks mechanisms within one optimizer but inverts across optimizers: Lion moves its norm least and loses the most (A18) | `results/e19_optimizer_density.json` |
+| F9 | "Graph skip + step-norm correction = 1.72x at +0.003 with the embedding always trained" | the embedding was never trained: the prefix forward ran under `no_grad` and the boundary was detached, so `tok.weight`/`pos.weight` had no gradient; and all three "seed" runs used `seed=0`. The corrected, gradient-complete construction (replay) runs at 0.82x | `results/e21_grad_reach.json`, `results/e22_realskip_fixed.json` |
 
 ## C. Open, with the run that would close it
 
@@ -54,5 +57,6 @@ numbers are the exception and are labelled as such.
 | O3 | ~~Does any of this hold for SGD or Lion?~~ **answered (A14-A16)**: the structure is optimizer- and state-dependent, so the framing survives | measured 200x spread across optimizers | done |
 | O6 | Do the sparsity/density cost curves (A5, A6) differ under Lion? | A14 predicts they must: a 5% budget that is nearly free under SGD should be far more damaging under Lion, which no paper in the sparsity literature reports | rerun E9 with the optimizer as a variable |
 | O4 | ~~Can the truncated-backward saving be realised inside a training loop?~~ **answered (A19)**: yes, 1.60-2.13x at a measured +0.003 to +0.009 held-out cost | done, on a 40 M model and a byte-level corpus | remaining: scale it to a real tokenizer and a 1B model |
-| O7 | Does the Lion penalty (A17) hold at scale and on a real tokenizer? | this is the claim most likely to change practice, and it rests on one 40 M byte-level run | rerun E19 on a 1B pretrained checkpoint with a real tokenizer |
+| O7 | Does the Lion penalty (A17) hold at scale and on a real tokenizer? | this is the claim most likely to change practice, and it rests on one 40 M byte-level run | E19 on a 1B pretrained checkpoint with a real tokenizer is implemented and running (`--pretrained --opt8bit`); results not yet in |
+| O8 | Can the dropped blocks' updates be kept current cheaply, without a replay forward? | E22 shows the obvious correction is slower than dense, so the system story depends on finding a compensation that is not recomputation | carry the dropped blocks' optimizer state with an estimate, then measure quality and step time |
 | O5 | Does the quality-neutral point move with model scale and task? | the 5%/20%/50% cost curve is one corpus and one architecture | repeat A6 at two model sizes and a second corpus |
