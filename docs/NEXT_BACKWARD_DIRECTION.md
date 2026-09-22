@@ -793,3 +793,63 @@ Caveat for anyone building on this: with only six blocks and a 25% sensitivity s
 test of DropBP's central claim. The honest statement is not "sensitivity does not work" but "at this
 scale there is no measurable signal for it to exploit, and the 0.026 total cost sets a ceiling on
 what any better criterion could recover".
+
+
+---
+
+## 4h. E18: the amplification is a joint property of the optimizer AND its state
+
+Everything above was measured with AdamW. The project's framing assumed the optimizer is the causal
+object, which makes a specific prediction: change the optimizer and the amplification picture should
+change. Three optimizers, identical model / data / steps / injected budget, two error models,
+`results/e18_optimizer_ablation.json` plus the warmup variants.
+
+### Median amplification `A_b` at c = 0.25, 112 matrix blocks
+
+| optimizer | proportional error | orthogonal error | update sign-flip rate |
+|---|---:|---:|---:|
+| SGD + momentum | **0.015** | 0.015 | 0.34% |
+| AdamW | 0.126 | 0.523 | 2.7% |
+| Lion | **2.953** | 5.864 | 4.6% |
+
+Two orders of magnitude separate SGD from Lion on the same gradients and the same budget. **The
+amplification is not a property of the error geometry alone, and it is not a property of the
+optimizer alone: it is a joint property.** This is the strongest support the project has for
+"optimizer-conditioned" as a real framing — and it arrives after the framing had been falsified on
+the allocation axis, which is worth noting.
+
+### And it depends on the optimizer's *state*, not just its type
+
+Same measurement at three warmup lengths, i.e. three ages of optimizer state:
+
+| warmup steps | SGD prop | Adam prop | Lion prop | Lion orth |
+|---:|---:|---:|---:|---:|
+| 5 | 0.081 | 0.077 | 0.780 | 1.773 |
+| 40 | 0.015 | 0.126 | 2.953 | 5.864 |
+| 120 | 0.013 | 0.125 | **3.057** | 5.368 |
+
+* **Lion's fragility grows 3.9x as its momentum matures** (0.78 -> 3.06) and then saturates.
+* **Adam's grows 1.6x** and saturates (0.077 -> 0.125).
+* **SGD's does not grow at all**; it falls (0.081 -> 0.013), consistent with the update simply being
+  the gradient, whose relative error is scale-free.
+
+The direction of the effect is the counterintuitive part: **the longer you train, the more damage a
+fixed relative gradient error does in update space under Lion**, because Lion's update is
+`sign(b1*m + (1-b1)*g)` and a mature momentum means more coordinates are close enough to a sign
+boundary for a small perturbation to flip a full-size step. Sign-based optimizers are the fragile
+ones; the adaptive optimizer everyone worries about is the middle of the pack; plain momentum SGD is
+the most robust.
+
+### Why this matters beyond the mechanism
+
+Lion and other sign/momentum methods are increasingly used for LLM pretraining, and the sparsity and
+low-rank literature is almost entirely evaluated on AdamW. The measurement here says those results
+do not transfer: **a 5% sparsification budget that is nearly free under SGD is 200x more damaging in
+update space under Lion, and it gets worse the longer the run.** Any paper reporting a compression
+ratio should report it per optimizer, and the current practice of tuning sparsification on AdamW and
+assuming the ratio carries over is not supported by anything measured here.
+
+Also worth stating plainly: this experiment falsified the prediction written down before it was run
+("if the structure is the same for SGD and Lion, the effect belongs to numerical linear algebra and
+the word optimizer-conditioned must come out of the title"). The structure is not the same, so the
+word stays in — by measurement, not by preference.

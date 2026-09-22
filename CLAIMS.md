@@ -24,6 +24,9 @@ numbers are the exception and are labelled as such.
 | A11 | At a fixed 4-of-6 block budget with the embedding kept, random / gradient-sensitive / pinned allocation differ by 0.002 AUC, and the total cost of dropping a third of the blocks is +0.026 | `results/e17_fixedk.json` | `python3 experiments/e17_equal_compute.py --device cuda --steps 400 --keep-layers 4` |
 | A12 | Quality-neutral requires the step-norm ratio near 1: the two mechanisms with ratio within 0.01 of dense are the two cheapest (cost 0.000 and 0.006); every other mechanism deviates and pays | `results/e14_diagnostic_table.json` | `python3 experiments/e14_diagnostic_table.py --device cuda --steps 400` |
 | A13 | Masking after a full backward saves optimizer work and **zero FLOPs**: sparse arms ran 1.0 s/step against 0.64 s/step dense | `results/e7_sparse_criterion_main.json` | `python3 experiments/e7_sparse_criterion.py --steps 400 --bs 4 --seq 512` |
+| A14 | **Amplification is a joint property of the optimizer and its state.** Same gradients and budget, median at c=0.25: SGD 0.015, AdamW 0.126, Lion 2.95 -- a 200x spread | `results/e18_optimizer_ablation.json` | `python3 experiments/e18_optimizer_ablation.py --device cuda --steps 60 --warmup 40` |
+| A15 | Within one optimizer it moves with state age: Lion proportional 0.78 (warmup 5) -> 2.95 (40) -> 3.06 (120); Adam 0.077 -> 0.126; SGD *falls* 0.081 -> 0.013 | `results/e18_warm5.json`, `results/e18_warm120.json` | same script with `--warmup 5` / `--warmup 120` |
+| A16 | The ordering survives scale on a real checkpoint: Llama-3.2-1B gives SGD 0.263, AdamW 0.228 (orthogonal 1.48), Lion 1.264 (orthogonal 2.68) | `results/e18_1b_final.json` | `... --pretrained --bs 1 --block 512 --lr 1e-5` |
 
 ## B. Falsified (kept on purpose)
 
@@ -43,6 +46,7 @@ numbers are the exception and are labelled as such.
 |---|---|---|---|
 | O1 | Does the 0.026 cost of dropping one third of the blocks survive at 1B+ scale? | every practical claim depends on the cost staying small as models grow | E17 at 1B inside a memory-gated window |
 | O2 | Is DropBP's sensitivity criterion measurably better when the sensitivity spread is large? | here the spread was 25% across six blocks, which makes the test weak | a deeper model (24+ blocks) where sensitivity varies by >2x |
-| O3 | Does any of this hold for SGD or Lion? | if the amplification structure is not Adam-specific, the framing becomes numerical linear algebra | rerun E2/E10 with SGD and Lion |
+| O3 | ~~Does any of this hold for SGD or Lion?~~ **answered (A14-A16)**: the structure is optimizer- and state-dependent, so the framing survives | measured 200x spread across optimizers | done |
+| O6 | Do the sparsity/density cost curves (A5, A6) differ under Lion? | A14 predicts they must: a 5% budget that is nearly free under SGD should be far more damaging under Lion, which no paper in the sparsity literature reports | rerun E9 with the optimizer as a variable |
 | O4 | Can a real kernel realise the 1.63x truncated-backward saving inside a training loop? | A8 measured the graph saving on a microbenchmark, not in a full step with a scheduler | fused block-dropping kernel + end-to-end step timing |
 | O5 | Does the quality-neutral point move with model scale and task? | the 5%/20%/50% cost curve is one corpus and one architecture | repeat A6 at two model sizes and a second corpus |

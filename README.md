@@ -36,6 +36,13 @@ online controller cannot do better (53%) — it saturates without ever reaching 
 
 ---
 
+**3. The amplification is a joint property of the optimizer and its state.** Identical gradients,
+identical injected budget, three optimizers: median amplification 0.015 (SGD+momentum), 0.126
+(AdamW), **2.95 (Lion)** — a 200x spread. And within Lion it **grows 3.9x as the run gets longer**
+(0.78 at 5 warmup steps -> 3.06 at 120), because a mature momentum puts more coordinates near a sign
+boundary where a small error flips a full-size step. The sparsity literature is evaluated almost
+entirely on AdamW; these numbers say the ratios do not transfer to sign-based optimizers.
+
 ## The four levers, all measured at the same scale
 
 | lever | measured effect size | who works on it |
@@ -44,6 +51,7 @@ online controller cannot do better (53%) — it saturates without ever reaching 
 | optimizer step-norm consistency | 0.19 AUC (half of the 5%-density cost) | essentially nobody |
 | always updating the embedding/head block | **0.49 AUC** | nobody |
 | removing backward work from the graph | **1.5-2.4x wall-clock** | DropBP, SLowMo and friends |
+| which optimizer the run uses | **200x change in amplification** (SGD 0.015 -> Lion 2.95) | nobody, in this context |
 
 The most crowded lever is the smallest one. Choosing coordinates cleverly is worth less than half of
 what keeping the embedding block updated is worth, it buys zero wall-clock by itself, and the one
@@ -70,6 +78,9 @@ Supporting measurements:
 
 Recorded because negative results are the reason to trust the rest:
 
+0. "The amplification is optimizer-independent numerical linear algebra." Falsified the other way:
+   the structure differs by 200x across SGD / AdamW / Lion, so "optimizer-conditioned" stays in the
+   title — by measurement, not preference.
 1. "Allocate backward compute by optimizer-state sensitivity." The derived statistic `sum g^2/v`
    loses to plain gradient norm at predicting fragility (Spearman 0.39 vs 0.60 over 112 blocks,
    four error geometries), and in per-coordinate form it ranks *worst* of four criteria.
@@ -99,6 +110,9 @@ python3 experiments/e11_step_controller.py   --device cuda --steps 400
 python3 experiments/e12_allocation.py        --device cuda --steps 500
 python3 experiments/e14_diagnostic_table.py  --device cuda --steps 400
 python3 experiments/e17_equal_compute.py     --device cuda --steps 400
+# E18 (optimizer ablation; --pretrained runs a real checkpoint via AUDIT_MODEL):
+python3 experiments/e18_optimizer_ablation.py --device cuda --steps 60 --warmup 40
+python3 experiments/e18_optimizer_ablation.py --pretrained --device cuda --bs 1 --block 512 --lr 1e-5
 ```
 
 Raw outputs land in `results/`. The corpus is not bundled — point `CORPUS` in the scripts at any
