@@ -28,7 +28,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MODEL = os.environ.get("AUDIT_MODEL", "/root/qcc/models/Llama-3.2-1B-Instruct")
-CORPUS = "/root/qcc/data/longbench/data"
+CORPUS = os.environ.get("AUDIT_CORPUS", "/root/qcc/data/longbench/data")
 PROJ = ("q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj")
 
 

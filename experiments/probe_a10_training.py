@@ -10,7 +10,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 MODEL = os.environ.get("AUDIT_MODEL", "/root/qcc/models/Llama-3.2-1B-Instruct")
-CORPUS = "/root/qcc/data/longbench/data"
+CORPUS = os.environ.get("AUDIT_CORPUS", "/root/qcc/data/longbench/data")
 
 
 def build_tokens(tok, need, seq):

@@ -26,7 +26,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-CORPUS = "/root/qcc/data/longbench/data"
+CORPUS = os.environ.get("AUDIT_CORPUS", "/root/qcc/data/longbench/data")
 
 
 def load_text(limit_chars):
