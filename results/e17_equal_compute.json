@@ -1,0 +1,352 @@
+{
+  "config": {
+    "steps": 400,
+    "tune_steps": 60,
+    "bs": 8,
+    "block": 256,
+    "ctx": 256,
+    "dim": 384,
+    "layers": 6,
+    "heads": 6,
+    "lr": 0.0002,
+    "b1": 0.9,
+    "b2": 0.95,
+    "chars": 200000000,
+    "device": "cuda",
+    "wait_free_gb": 1.5,
+    "out": "/root/qcc/review20260922/e17_equal_compute.json"
+  },
+  "arms": {
+    "fully_random": {
+      "mode": "fully_random",
+      "pin": false,
+      "keep_layers": 5.644,
+      "mean_kept": 5.61,
+      "auc": 3.2048,
+      "final_loss": 3.0964,
+      "median_upd_norm": 866.873,
+      "median_step_ms": 43.6,
+      "rows": [
+        {
+          "step": 0,
+          "loss": 5.6976
+        },
+        {
+          "step": 25,
+          "loss": 3.3831
+        },
+        {
+          "step": 50,
+          "loss": 3.208
+        },
+        {
+          "step": 75,
+          "loss": 3.1715
+        },
+        {
+          "step": 100,
+          "loss": 3.1286
+        },
+        {
+          "step": 125,
+          "loss": 3.0256
+        },
+        {
+          "step": 150,
+          "loss": 3.2216
+        },
+        {
+          "step": 175,
+          "loss": 3.1242
+        },
+        {
+          "step": 200,
+          "loss": 3.0477
+        },
+        {
+          "step": 225,
+          "loss": 3.1316
+        },
+        {
+          "step": 250,
+          "loss": 3.0555
+        },
+        {
+          "step": 275,
+          "loss": 3.0968
+        },
+        {
+          "step": 300,
+          "loss": 3.0647
+        },
+        {
+          "step": 325,
+          "loss": 3.0722
+        },
+        {
+          "step": 350,
+          "loss": 3.2195
+        },
+        {
+          "step": 375,
+          "loss": 3.026
+        },
+        {
+          "step": 399,
+          "loss": 3.1048
+        }
+      ],
+      "label": "fully_random"
+    },
+    "grad_aware": {
+      "mode": "grad_aware",
+      "pin": false,
+      "keep_layers": 5.644,
+      "mean_kept": 5.54,
+      "auc": 3.2046,
+      "final_loss": 3.0955,
+      "median_upd_norm": 859.97,
+      "median_step_ms": 46.28,
+      "rows": [
+        {
+          "step": 0,
+          "loss": 5.6976
+        },
+        {
+          "step": 25,
+          "loss": 3.3831
+        },
+        {
+          "step": 50,
+          "loss": 3.2036
+        },
+        {
+          "step": 75,
+          "loss": 3.1688
+        },
+        {
+          "step": 100,
+          "loss": 3.1249
+        },
+        {
+          "step": 125,
+          "loss": 3.0267
+        },
+        {
+          "step": 150,
+          "loss": 3.2204
+        },
+        {
+          "step": 175,
+          "loss": 3.1231
+        },
+        {
+          "step": 200,
+          "loss": 3.048
+        },
+        {
+          "step": 225,
+          "loss": 3.1323
+        },
+        {
+          "step": 250,
+          "loss": 3.0518
+        },
+        {
+          "step": 275,
+          "loss": 3.0977
+        },
+        {
+          "step": 300,
+          "loss": 3.0613
+        },
+        {
+          "step": 325,
+          "loss": 3.0688
+        },
+        {
+          "step": 350,
+          "loss": 3.2211
+        },
+        {
+          "step": 375,
+          "loss": 3.0256
+        },
+        {
+          "step": 399,
+          "loss": 3.1055
+        }
+      ],
+      "label": "grad_aware"
+    },
+    "grad_aware_pin": {
+      "mode": "grad_aware",
+      "pin": true,
+      "keep_layers": 5.822,
+      "mean_kept": 6.657,
+      "auc": 2.7238,
+      "final_loss": 2.5992,
+      "median_upd_norm": 839.431,
+      "median_step_ms": 45.5,
+      "rows": [
+        {
+          "step": 0,
+          "loss": 5.6976
+        },
+        {
+          "step": 25,
+          "loss": 2.9476
+        },
+        {
+          "step": 50,
+          "loss": 2.719
+        },
+        {
+          "step": 75,
+          "loss": 2.7051
+        },
+        {
+          "step": 100,
+          "loss": 2.6214
+        },
+        {
+          "step": 125,
+          "loss": 2.5284
+        },
+        {
+          "step": 150,
+          "loss": 2.7202
+        },
+        {
+          "step": 175,
+          "loss": 2.6105
+        },
+        {
+          "step": 200,
+          "loss": 2.5177
+        },
+        {
+          "step": 225,
+          "loss": 2.6267
+        },
+        {
+          "step": 250,
+          "loss": 2.5608
+        },
+        {
+          "step": 275,
+          "loss": 2.5731
+        },
+        {
+          "step": 300,
+          "loss": 2.5689
+        },
+        {
+          "step": 325,
+          "loss": 2.5489
+        },
+        {
+          "step": 350,
+          "loss": 2.7838
+        },
+        {
+          "step": 375,
+          "loss": 2.5218
+        },
+        {
+          "step": 399,
+          "loss": 2.6097
+        }
+      ],
+      "label": "grad_aware_pin"
+    },
+    "dense": {
+      "mode": "fully_random",
+      "pin": false,
+      "keep_layers": 6.0,
+      "mean_kept": 6.0,
+      "auc": 3.1985,
+      "final_loss": 3.094,
+      "median_upd_norm": 896.538,
+      "median_step_ms": 47.21,
+      "rows": [
+        {
+          "step": 0,
+          "loss": 5.6976
+        },
+        {
+          "step": 25,
+          "loss": 3.3703
+        },
+        {
+          "step": 50,
+          "loss": 3.1992
+        },
+        {
+          "step": 75,
+          "loss": 3.1686
+        },
+        {
+          "step": 100,
+          "loss": 3.1186
+        },
+        {
+          "step": 125,
+          "loss": 3.0207
+        },
+        {
+          "step": 150,
+          "loss": 3.2142
+        },
+        {
+          "step": 175,
+          "loss": 3.121
+        },
+        {
+          "step": 200,
+          "loss": 3.0393
+        },
+        {
+          "step": 225,
+          "loss": 3.1286
+        },
+        {
+          "step": 250,
+          "loss": 3.0545
+        },
+        {
+          "step": 275,
+          "loss": 3.0963
+        },
+        {
+          "step": 300,
+          "loss": 3.0624
+        },
+        {
+          "step": 325,
+          "loss": 3.0667
+        },
+        {
+          "step": 350,
+          "loss": 3.2181
+        },
+        {
+          "step": 375,
+          "loss": 3.0209
+        },
+        {
+          "step": 399,
+          "loss": 3.1046
+        }
+      ]
+    }
+  },
+  "grad_sensitivity": {
+    "0": 0.2389960615739434,
+    "1": 0.2424494083101025,
+    "2": 0.2533901400868765,
+    "3": 0.2698264639601529,
+    "4": 0.28640997525030487,
+    "5": 0.3001278049531626
+  }
+}
