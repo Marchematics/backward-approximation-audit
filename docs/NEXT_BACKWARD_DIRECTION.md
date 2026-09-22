@@ -992,3 +992,51 @@ The system story cannot be "we skip backward and stay quality-neutral". The hone
    replay forward — e.g. carry the dropped blocks' optimizer state forward with a cheap estimate
    rather than a recomputation. That is the open systems question, and E22 shows the obvious
    construction (replay) does not work.
+
+
+---
+
+## 5c. Second retraction: the E19 "Lion is 4.8x worse" result was seed noise
+
+The E19 grid reported the held-out cost of 5% sparsity as +0.065 (AdamW), +0.112 (SGD) and **+0.311
+(Lion)**, and that last number became the centrepiece of the write-up and of the previous round's
+summary. It does not replicate.
+
+E19 was not seedable (`--seed` existed on the CLI but was never threaded into `run()`). It is now, and
+the exact E19 configuration re-run at seeds 0/1/2 gives:
+
+| seed | dense held-out loss | 5% held-out loss | "damage" |
+|---|---:|---:|---:|
+| 0 | 2.5266 | 2.8375 | **+0.311** |
+| 1 | 2.3467 | 2.7053 | +0.359 |
+| 2 | 2.2355 | 2.7037 | +0.468 |
+
+**The dense baseline moves by 0.29 across seeds — the same size as the effect being reported.** The
++0.311 was the smallest of the three dense baselines, which is exactly what made Lion look worst. The
+honest statement is that at this scale the *dense* run is the noisy arm and the effect is not
+resolvable from single runs.
+
+That is not a small methodological footnote; it invalidates a headline. Two further facts make it
+worse for the original claim and more interesting overall:
+
+* **The sparse arms are far more reproducible than the dense one.** Lion at 5% gave 2.8375 / 2.7053 /
+  2.7037 across seeds where dense gave 2.5266 / 2.3467 / 2.2355. Truncating the update to its top 5%
+  makes the run *stabilise* — a plausible mechanism (the mask acts as a strong, data-independent
+  regulariser, and `sign` discards magnitude) but one this project has not isolated.
+* **A clean, seeded, five-run comparison reverses the ordering.** `e23` (five independent grids, two
+  mask scopes, two seeds) gives 5% damage of **+0.086 (AdamW), +0.14..+0.17 (SGD), +0.065..+0.075
+  (Lion)**. Lion is the *least* damaged, not the most, and the spread across the five runs is 1.17x.
+
+So the correct claims are:
+
+* **Withdrawn**: "at 5% density Lion pays 4.8x what AdamW pays".
+* **Stands**: the amplification measurements (A14-A16) — those are ratio measurements on fixed states,
+  not end-to-end runs, and they replicate.
+* **Stands**: the E18 structural facts (SGD's amplification is invariant, Lion's grows with state age).
+* **New and better supported**: optimizer-specific risk scores predict damage *ordering* within an
+  optimizer. Spearman rho(risk, damage) over four densities is 1.00 for AdamW in all five runs, 1.00
+  for SGD, and 0.80-1.00 for Lion. What is *not* supported is a single cross-optimizer risk scale.
+
+The lesson generalises past this project: single-run optimizer comparisons at this model scale are
+not evidence. Both retractions in this document (E20 and E19) came from the same root cause — a
+comparison whose noise floor was never measured.

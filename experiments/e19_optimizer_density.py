@@ -203,6 +203,7 @@ def main():
     ap.add_argument("--wait-free-gb", type=float, default=1.5)
     ap.add_argument("--pretrained", action="store_true",
                     help="use AUDIT_MODEL (HuggingFace checkpoint + its tokenizer)")
+    ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--opt8bit", action="store_true",
                     help="8-bit Adam state (needed for a 1B full-parameter run on 24 GB)")
     ap.add_argument("--out", default=os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -252,7 +253,7 @@ def main():
             args.lr = lr_map[o]
             print(f"[e19] {o}: lr {args.lr}", flush=True)
         for d in densities:
-            r = run(o, d, args, train, val, vocab, dev)
+            r = run(o, d, args, train, val, vocab, dev, seed=args.seed)
             out["grid"][o][str(d)] = r
             print(f"[e19] {o:<6} keep {d:<5} auc {r['auc']:.4f} val {r['val_loss']:.4f} "
                   f"||dtheta|| {r['median_upd_norm']}", flush=True)
