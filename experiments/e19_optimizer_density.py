@@ -68,10 +68,32 @@ class Opt:
                 p.add_(upd, alpha=-self.lr)
 
 
-def run(opt_name, keep_frac, args, train, val, vocab, dev, seed=0):
+def build_model(args, vocab, dev, seed=0):
+    """Compact GPT, or a real pretrained checkpoint when --pretrained is given."""
     torch.manual_seed(seed)
-    model = GPT(vocab, args.dim, args.layers, args.heads, args.ctx).to(dev)
-    opt = Opt(opt_name, model.parameters(), args.lr, args.b1, args.b2, args.eps)
+    if not args.pretrained:
+        return GPT(vocab, args.dim, args.layers, args.heads, args.ctx).to(dev), None
+    from transformers import AutoModelForCausalLM
+    model_dir = os.environ.get("AUDIT_MODEL", "/root/qcc/models/Llama-3.2-1B-Instruct")
+    m = AutoModelForCausalLM.from_pretrained(model_dir, dtype=torch.bfloat16).to(dev)
+    m.gradient_checkpointing_enable()
+    m.train()
+    return m, model_dir
+
+
+def logits_of(out):
+    return out.logits if hasattr(out, "logits") else out
+
+
+def run(opt_name, keep_frac, args, train, val, vocab, dev, seed=0):
+    model, _ = build_model(args, vocab, dev, seed)
+    if args.opt8bit and opt_name == "adamw":
+        import bitsandbytes as bnb
+        opt = bnb.optim.AdamW8bit(model.parameters(), lr=args.lr,
+                                  betas=(args.b1, args.b2), eps=args.eps)
+    else:
+        opt = Opt(opt_name, model.parameters(), args.lr, args.b1, args.b2, args.eps)
+    opt_is_bnb = hasattr(opt, "state") and args.opt8bit and opt_name == "adamw"
     norms, rows, auc = [], [], 0.0
 
     def batch(stream, i):
@@ -83,7 +105,7 @@ def run(opt_name, keep_frac, args, train, val, vocab, dev, seed=0):
     t0 = time.time()
     for i in range(args.steps):
         x, y = batch(train, i)
-        loss = F.cross_entropy(model(x).reshape(-1, vocab), y.reshape(-1))
+        loss = F.cross_entropy(logits_of(model(x)).reshape(-1, vocab), y.reshape(-1))
         loss.backward()
         if keep_frac < 1.0:
             for p in model.parameters():
@@ -96,12 +118,31 @@ def run(opt_name, keep_frac, args, train, val, vocab, dev, seed=0):
                 out.view(-1)[idx] = g.view(-1)[idx]
                 p.grad = out
         opt.step()
-        opt.zero_grad()
+        if opt_is_bnb:
+            opt.zero_grad(set_to_none=True)
+        else:
+            opt.zero_grad()
         if i >= args.warmup:
             with torch.no_grad():
                 s = 0.0
                 for p in model.parameters():
                     st = opt.state.get(p, {})
+                    if opt_is_bnb:
+                        # bitsandbytes >=0.50 calls the slots state1/state2; older builds use
+                        # exp_avg/exp_avg_sq. Accept both, and dequantise when needed.
+                        mslot = st.get("exp_avg", st.get("state1"))
+                        if mslot is None:
+                            continue
+                        if mslot.dtype not in (torch.float32, torch.float16):
+                            try:
+                                import bitsandbytes.functional as BF
+                                mslot = BF.dequantize_blockwise(
+                                    mslot, st.get("absmax1", st.get("absmax")),
+                                    blocksize=st.get("blocksize", 256))
+                            except Exception:
+                                mslot = mslot.float()
+                        s += float((mslot.float() ** 2).sum())
+                        continue
                     if opt_name == "adamw" and "m" in st:
                         bc1 = 1 - args.b1 ** opt.t
                         bc2 = 1 - args.b2 ** opt.t
@@ -124,7 +165,8 @@ def run(opt_name, keep_frac, args, train, val, vocab, dev, seed=0):
         nb = 0
         for j in range(args.val_batches):
             x, y = batch(val, j)
-            vs += float(F.cross_entropy(model(x).reshape(-1, vocab), y.reshape(-1)).item())
+            vs += float(F.cross_entropy(
+                logits_of(model(x)).reshape(-1, vocab), y.reshape(-1)).item())
             nb += 1
     res = {"optimizer": opt_name, "keep_frac": keep_frac,
            "auc": round(auc / args.steps, 4),
@@ -159,6 +201,10 @@ def main():
     ap.add_argument("--chars", type=int, default=200_000_000)
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--wait-free-gb", type=float, default=1.5)
+    ap.add_argument("--pretrained", action="store_true",
+                    help="use AUDIT_MODEL (HuggingFace checkpoint + its tokenizer)")
+    ap.add_argument("--opt8bit", action="store_true",
+                    help="8-bit Adam state (needed for a 1B full-parameter run on 24 GB)")
     ap.add_argument("--out", default=os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                                  "..", "results", "e19_optimizer_density.json"))
     args = ap.parse_args()
@@ -179,13 +225,25 @@ def main():
             time.sleep(30)
 
     text = load_text(args.chars)
-    vocab = 256
-    all_ids = list(text.encode("utf-8", errors="ignore"))
-    cut = int(0.98 * len(all_ids))
+    if args.pretrained:
+        from transformers import AutoTokenizer, AutoConfig
+        model_dir = os.environ.get("AUDIT_MODEL", "/root/qcc/models/Llama-3.2-1B-Instruct")
+        tok = AutoTokenizer.from_pretrained(model_dir)
+        vocab = AutoConfig.from_pretrained(model_dir).vocab_size
+        all_ids = tok(text, add_special_tokens=False)["input_ids"]
+        assert max(all_ids) < vocab
+    else:
+        vocab = 256
+        all_ids = list(text.encode("utf-8", errors="ignore"))
+    # reserve a fixed-size block at the END of the stream for validation: a 2% split of a
+    # small stream can leave too few validation windows to measure anything
+    n_val = min(len(all_ids) // 5, max(200_000, args.val_batches * args.bs * (args.block + 1) * 4))
+    cut = len(all_ids) - n_val
     train = torch.tensor(all_ids[:cut], dtype=torch.long)
     val = torch.tensor(all_ids[cut:], dtype=torch.long)
     print(f"[e19] train {train.numel()/1e6:.1f}M / val {val.numel()/1e6:.1f}M bytes | "
-          f"optimizers {opts} | densities {densities}", flush=True)
+          f"optimizers {opts} | densities {densities} | pretrained={args.pretrained} "
+          f"| 8bit={args.opt8bit}", flush=True)
 
     out = {"config": vars(args), "grid": {}}
     for o in opts:
