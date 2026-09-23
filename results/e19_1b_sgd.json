@@ -1,0 +1,67 @@
+{
+  "config": {
+    "steps": 1000,
+    "warmup": 30,
+    "val_batches": 8,
+    "bs": 1,
+    "block": 512,
+    "ctx": 512,
+    "dim": 384,
+    "layers": 6,
+    "heads": 6,
+    "lr": 1e-05,
+    "b1": 0.9,
+    "b2": 0.95,
+    "eps": 1e-08,
+    "densities": "1.0,0.5,0.2,0.05",
+    "optimizers": "sgd",
+    "lr_map": "",
+    "chars": 12000000,
+    "device": "cuda",
+    "wait_free_gb": 3.0,
+    "pretrained": true,
+    "seed": 0,
+    "opt8bit": true,
+    "out": "/root/qcc/review20260922/e19_1b_sgd.json"
+  },
+  "grid": {
+    "sgd": {
+      "1.0": {
+        "optimizer": "sgd",
+        "keep_frac": 1.0,
+        "auc": 2.6351,
+        "val_loss": 2.4014,
+        "median_upd_norm": 47.763,
+        "final_loss": 3.0,
+        "sec": 195.6
+      },
+      "0.5": {
+        "optimizer": "sgd",
+        "keep_frac": 0.5,
+        "auc": 2.6348,
+        "val_loss": 2.4014,
+        "median_upd_norm": 47.412,
+        "final_loss": 3.0,
+        "sec": 439.8
+      },
+      "0.2": {
+        "optimizer": "sgd",
+        "keep_frac": 0.2,
+        "auc": 2.6348,
+        "val_loss": 2.4014,
+        "median_upd_norm": 45.681,
+        "final_loss": 3.0,
+        "sec": 413.7
+      },
+      "0.05": {
+        "optimizer": "sgd",
+        "keep_frac": 0.05,
+        "auc": 2.635,
+        "val_loss": 2.4023,
+        "median_upd_norm": 42.46,
+        "final_loss": 3.0,
+        "sec": 355.0
+      }
+    }
+  }
+}

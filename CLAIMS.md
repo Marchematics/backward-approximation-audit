@@ -52,6 +52,18 @@ numbers are the exception and are labelled as such.
 | F10 | "At 5% density Lion pays 4.8x what AdamW pays" | not reproducible under seeding: the three dense baselines span 0.29, larger than the effect, and the published +0.311 used the lowest of them. Seeded five-run comparison reverses the ordering (A22) | `results/e19_repro_s*.json`, `results/e23_*.json` |
 | F9 | "Graph skip + step-norm correction = 1.72x at +0.003 with the embedding always trained" | the embedding was never trained: the prefix forward ran under `no_grad` and the boundary was detached, so `tok.weight`/`pos.weight` had no gradient; and all three "seed" runs used `seed=0`. The corrected, gradient-complete construction (replay) runs at 0.82x | `results/e21_grad_reach.json`, `results/e22_realskip_fixed.json` |
 
+## B2. Configuration failures (recorded so they are not repeated)
+
+| # | attempt | how it failed | evidence |
+|---|---|---|---|
+| X1 | 1B optimizer x density grid, corpus 1.5 M tokens, 1000 steps, lr 1e-5 | **non-discriminative**: training loss *rose* (AdamW 2.489 -> 2.766, SGD -> 3.000) while held-out loss stayed flat to four decimals (SGD: 2.4014 at every density). Fine-tuning a pretrained 1B on too little data cannot resolve a sparsity effect, so the grid answers nothing | `results/e19_1b_adamw.json`, `results/e19_1b_sgd.json` |
+| X2 | same grid, Lion arm | the process was killed mid-run by an external action, not by an in-code failure | partial only |
+| X3 | per-seed replication of E19 | revealed that E19's dense arm moves 0.29 across seeds, larger than the reported effect (see F10) | `results/e19_repro_s*.json` |
+
+The 1B question is therefore still open (O7), and the next attempt needs a corpus large enough that
+held-out loss actually moves: >= 50 M characters and a learning rate calibrated until training loss
+*decreases*.
+
 ## C. Open, with the run that would close it
 
 | # | question | why it matters | the run |
