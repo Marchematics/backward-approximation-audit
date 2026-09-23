@@ -1583,3 +1583,63 @@ E28 replicated it across 3 seeds **and 2 run lengths**, i.e. across configuratio
 
 Only the wall-clock casualties are genuine noise-floor cases, and there the floor is the
 across-process spread of up to 1.78x.
+
+
+---
+
+## 5f. O16: the same comparison, four configurations — the effect is a regime artifact, quantified
+
+The most consequential claim this project produced (round 3, since withdrawn) was "at 5% density Lion
+pays 4.8x what AdamW pays". It was withdrawn because E23 gave +0.065 for the nominally same thing. O16
+turns that single anecdote into a distribution.
+
+Design: **one** comparison — Lion damage minus AdamW damage at 5% density, both at their own
+calibrated lr — measured under **four configurations** (2 run lengths x 2 training-slice offsets),
+**three seeds** each. 24 runs. `results/o16_*.json`.
+
+| configuration | dense held-out loss | Lion − AdamW damage (mean of 3 seeds) | within-config sd |
+|---|---:|---:|---:|
+| 300 steps, offset 0 | 2.6096 | **−0.0079** | 0.0032 |
+| 300 steps, offset 40M | 2.9849 | +0.0074 | 0.0209 |
+| **800 steps, offset 0** | **1.2122** | **+1.0924** | 0.3848 |
+| 800 steps, offset 40M | 2.9187 | +0.0086 | 0.0422 |
+
+**Variance decomposition of the same nominal effect:**
+
+| component | sd |
+|---|---:|
+| between configurations | **0.5449** |
+| within a configuration (seed) | **0.1939** |
+| ratio | **2.8x** |
+
+**Grand mean +0.2751 with between-config sd 0.5449 — the effect is not distinguishable from zero.**
+And the direction is not stable either: it is *negative* (Lion marginally better) in one
+configuration and +1.09 in another.
+
+### The mechanism is visible in the dense column, and it is not about the optimizer
+
+The one configuration with a large effect is the one whose **dense** held-out loss is 1.2122 — the
+memorising regime. The other three sit at 2.61-2.98, generalising, and all three give an effect within
+±0.009 of zero. So:
+
+> **The entire "Lion is 4.8x more damaged" effect was the sparse arm failing to keep pace inside a
+> memorisation race.** In a generalising regime, Lion and AdamW are indistinguishable at 5% density
+> (three configurations agree to within 0.009), and the direction of the small residual difference is
+> not stable.
+
+### Why this is the paper, if there is one
+
+Six withdrawals (F10-F14) were each a single-configuration result. O16 shows what that costs, on the
+one comparison the project cared most about:
+
+* pick 800 steps / offset 0 and you get a **+1.09 effect with a plausible story** — this is what
+  round 3 published;
+* pick any of the other three and you get **~0**;
+* the between-configuration sd is **2.8x the seed sd**, so no number of seeds would have caught it;
+* and the discriminating variable is not the optimizer, it is whether the run crossed into
+  memorisation — which is decided by *run length x corpus slice*, two choices that most papers never
+  report.
+
+That is a specific, quantified, and checkable claim about a class of published results, and it is the
+most defensible thing this project has. It is also the reason A23 is the only prediction that
+survived: E28 replicated it across two run lengths, i.e. across configurations, by design.

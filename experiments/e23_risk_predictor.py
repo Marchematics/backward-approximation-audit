@@ -202,6 +202,8 @@ def main():
     ap.add_argument("--eps", type=float, default=1e-8)
     ap.add_argument("--mask-scope", default="2d", choices=["2d", "all"])
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--train-offset", type=int, default=0,
+                    help="byte offset of the training slice, for configuration-dependence tests")
     ap.add_argument("--densities", default="1.0,0.5,0.2,0.05")
     ap.add_argument("--optimizers", default="sgd,adamw,lion")
     ap.add_argument("--lr-map", default="sgd=3e-4,adamw=2e-4,lion=1e-4")
@@ -231,10 +233,12 @@ def main():
     vocab = 256
     ids = list(text.encode("utf-8", errors="ignore"))
     n_val = min(len(ids) // 5, max(200_000, args.val_batches * args.bs * (args.block + 1) * 4))
-    train = torch.tensor(ids[:len(ids) - n_val], dtype=torch.long)
+    off = min(args.train_offset, max(0, len(ids) - n_val - 1))
+    train = torch.tensor(ids[off:len(ids) - n_val], dtype=torch.long)
     val = torch.tensor(ids[len(ids) - n_val:], dtype=torch.long)
     print(f"[e23] train {train.numel()/1e6:.0f}M val {val.numel()/1e6:.1f}M | opts {opts} "
-          f"| densities {densities} | mask {args.mask_scope} | seed {args.seed}", flush=True)
+          f"| densities {densities} | mask {args.mask_scope} | seed {args.seed} "
+          f"| train_offset {args.train_offset}", flush=True)
 
     out = {"config": vars(args), "rows": []}
     for o in opts:
