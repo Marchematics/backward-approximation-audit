@@ -1,0 +1,160 @@
+{
+  "config": {
+    "steps": 900,
+    "probe_at": 450,
+    "val_batches": 8,
+    "bs": 8,
+    "block": 256,
+    "ctx": 256,
+    "dim": 384,
+    "layers": 6,
+    "heads": 6,
+    "lr": 0.0001,
+    "b1": 0.9,
+    "b2": 0.95,
+    "eps": 1e-08,
+    "mask_scope": "2d",
+    "seed": 0,
+    "densities": "1.0,0.5,0.2,0.05",
+    "optimizers": "sgd,adamw,lion",
+    "lr_map": "sgd=3e-4,adamw=2e-4,lion=1e-4",
+    "chars": 60000000,
+    "device": "cuda",
+    "wait_free_gb": 2.0,
+    "out": "/root/qcc/review20260922/e28_s900_seed0.json"
+  },
+  "rows": [
+    {
+      "optimizer": "sgd",
+      "keep_frac": 1.0,
+      "auc": 3.496,
+      "val_loss": 3.212,
+      "final_loss": 3.1472,
+      "risk_sgd": 0.0,
+      "risk_adamw": 0.0,
+      "risk_lion": 0.0,
+      "flip_frac_of_dropped": 0.0
+    },
+    {
+      "optimizer": "sgd",
+      "keep_frac": 0.5,
+      "auc": 3.5041,
+      "val_loss": 3.2179,
+      "final_loss": 3.1527,
+      "risk_sgd": 0.000274,
+      "risk_adamw": 0.122759,
+      "risk_lion": 0.198844,
+      "flip_frac_of_dropped": 0.049186
+    },
+    {
+      "optimizer": "sgd",
+      "keep_frac": 0.2,
+      "auc": 3.5468,
+      "val_loss": 3.2444,
+      "final_loss": 3.177,
+      "risk_sgd": 0.001687,
+      "risk_adamw": 0.222723,
+      "risk_lion": 0.913364,
+      "flip_frac_of_dropped": 0.275528
+    },
+    {
+      "optimizer": "sgd",
+      "keep_frac": 0.05,
+      "auc": 3.6807,
+      "val_loss": 3.3315,
+      "final_loss": 3.2569,
+      "risk_sgd": 0.006573,
+      "risk_adamw": 0.320962,
+      "risk_lion": 0.842522,
+      "flip_frac_of_dropped": 0.635885
+    },
+    {
+      "optimizer": "adamw",
+      "keep_frac": 1.0,
+      "auc": 2.3572,
+      "val_loss": 0.3425,
+      "final_loss": 0.3189,
+      "risk_sgd": 0.0,
+      "risk_adamw": 0.0,
+      "risk_lion": 0.0,
+      "flip_frac_of_dropped": 0.0
+    },
+    {
+      "optimizer": "adamw",
+      "keep_frac": 0.5,
+      "auc": 2.4151,
+      "val_loss": 0.5191,
+      "final_loss": 0.4848,
+      "risk_sgd": 0.0,
+      "risk_adamw": 0.477484,
+      "risk_lion": 0.914258,
+      "flip_frac_of_dropped": 0.355506
+    },
+    {
+      "optimizer": "adamw",
+      "keep_frac": 0.2,
+      "auc": 2.6638,
+      "val_loss": 2.5008,
+      "final_loss": 2.4652,
+      "risk_sgd": 0.0,
+      "risk_adamw": 0.738866,
+      "risk_lion": 2.024884,
+      "flip_frac_of_dropped": 0.465538
+    },
+    {
+      "optimizer": "adamw",
+      "keep_frac": 0.05,
+      "auc": 2.7416,
+      "val_loss": 2.6905,
+      "final_loss": 2.6035,
+      "risk_sgd": 1e-06,
+      "risk_adamw": 0.851448,
+      "risk_lion": 2.574551,
+      "flip_frac_of_dropped": 0.673819
+    },
+    {
+      "optimizer": "lion",
+      "keep_frac": 1.0,
+      "auc": 2.0541,
+      "val_loss": 0.0366,
+      "final_loss": 0.0348,
+      "risk_sgd": 0.0,
+      "risk_adamw": 0.0,
+      "risk_lion": 0.0,
+      "flip_frac_of_dropped": 0.0
+    },
+    {
+      "optimizer": "lion",
+      "keep_frac": 0.5,
+      "auc": 2.0613,
+      "val_loss": 0.0395,
+      "final_loss": 0.0371,
+      "risk_sgd": 0.0,
+      "risk_adamw": 0.496755,
+      "risk_lion": 0.353715,
+      "flip_frac_of_dropped": 0.356114
+    },
+    {
+      "optimizer": "lion",
+      "keep_frac": 0.2,
+      "auc": 2.1999,
+      "val_loss": 0.0917,
+      "final_loss": 0.0786,
+      "risk_sgd": 0.0,
+      "risk_adamw": 0.792558,
+      "risk_lion": 0.686791,
+      "flip_frac_of_dropped": 0.443228
+    },
+    {
+      "optimizer": "lion",
+      "keep_frac": 0.05,
+      "auc": 2.7248,
+      "val_loss": 2.363,
+      "final_loss": 2.3456,
+      "risk_sgd": 0.0,
+      "risk_adamw": 0.933244,
+      "risk_lion": 0.88821,
+      "flip_frac_of_dropped": 0.595528
+    }
+  ]
+}

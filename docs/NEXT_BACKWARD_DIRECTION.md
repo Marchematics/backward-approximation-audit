@@ -1294,3 +1294,63 @@ Two candidate explanations were tested and neither rescues A14:
 
 This is the fourth withdrawal. All four share one cause: an effect size below the variation between
 regimes, established by varying one axis (a seed, a corpus, a run length) at a time.
+
+
+---
+
+## 4o. E28: the risk predictor survives the two-axis protocol, and the damage magnitude does not
+
+A23 was the most load-bearing claim left after four retractions, so it got the protocol first:
+3 seeds x 2 run lengths (300 and 900 steps), three optimizers, four densities.
+`results/e28_s*_seed*.json`.
+
+**Spearman rho(optimizer's own risk score, damage) over the four densities:**
+
+| steps | seed | SGD | AdamW | Lion |
+|---:|---:|---:|---:|---:|
+| 300 | 0 | 1.00 | 0.80 | 1.00 |
+| 300 | 1 | 1.00 | 0.80 | 1.00 |
+| 300 | 2 | 1.00 | 1.00 | 1.00 |
+| 900 | 0 | 1.00 | 1.00 | 1.00 |
+| 900 | 1 | 1.00 | 1.00 | 1.00 |
+| 900 | 2 | 1.00 | 1.00 | 1.00 |
+
+**A23 survives.** Across 18 optimizer-runs the rank correlation between an optimizer's own risk score
+and the damage ordering of its density sweep is 0.80-1.00, with 1.00 in 15 of 18 and never below 0.80.
+This is now the best-supported prediction in the project: it is cheap to compute, it is monotone in
+the budget, and it replicates on both protocol axes.
+
+**The damage magnitudes, however, split cleanly by regime — and that is the second result:**
+
+| regime | dense held-out loss | damage at 5% density |
+|---|---:|---|
+| generalising | 2.69 - 3.54 (SGD, and AdamW/Lion at 300 steps) | +0.030 to +0.199 |
+| memorising | 0.03 - 0.46 (AdamW/Lion at 900 steps) | **+2.23 to +2.51** |
+
+The same arms, the same code, the same densities: ±0.2 in one regime and ±2.4 in the other. This is
+E24's X1 and E19's F10 in a controlled form, and it makes the protocol concrete:
+
+> **A damage number from an approximate-backward comparison is only interpretable if the dense
+> baseline's held-out loss is stated, and only comparable to another number from the same regime.**
+> The runs here cross the boundary somewhere between 300 and 900 steps on this corpus, at 2 MB and
+> 5 MB of data seen respectively (A33).
+
+**A caveat the table also exposes: SGD's sparsity immunity is an artifact of its step size.** SGD's
+damage stays at +0.11 to +0.20 in *both* regimes and its dense loss never drops below 3.2, i.e. it is
+not memorising the data at all. A sparsity budget cannot damage a run that is barely moving — the
+update norms measured earlier differ by five orders of magnitude between SGD and AdamW. So "SGD is the
+most sparsity-robust optimizer" is confounded by "SGD is not learning much here", and must not be
+quoted as robustness.
+
+### Where this leaves the project
+
+| layer | status |
+|---|---|
+| Mechanism | E18's within-optimizer structure untested by the protocol (O12); A14 withdrawn |
+| Prediction | **A23 survives the protocol** and is the strongest survivor: optimizer-specific risk scores predict that optimizer's damage ordering |
+| Scale | E25 is a design effect, not scale (A28) |
+| Method | no per-optimizer scheduling rule survived (F12); E22 showed the obvious gradient-correct construction is slower than dense |
+| System | not attempted |
+
+The honest one-line summary of fifteen rounds: **the reliable object is a cheap risk predictor and a
+regime guard, not a speedup.**
