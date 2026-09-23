@@ -1515,3 +1515,71 @@ are of two kinds only: *training regime* (quality claims) and *device contention
 That is a citable methodological result in its own right, and it is the most defensible thing this
 project has produced: **a specification of what cannot be measured on a single shared mid-range GPU,
 with the measurements that demonstrate each floor.**
+
+
+---
+
+## 5e. E31: the floors, measured on purpose — and a correction to 5d
+
+5d attributed the six withdrawals to "noise floors" of two kinds. That was an inference from the
+casualties, not a measurement. E31 measures them directly: identical configuration, no treatment
+difference, 5 seeds for quality and 6 interleaved repetitions for wall clock.
+`results/e31_floors.json`.
+
+**FLOOR-1, quality (5 seeds, identical config):**
+
+| quantity | mean | sd | spread |
+|---|---:|---:|---:|
+| 5%-density damage | +0.0592 | 0.0122 | 0.0300 |
+| dense held-out loss | 2.6101 | 0.0672 | 0.1720 |
+
+Two facts, and the second is the important one:
+
+1. **Damage is reproducible seed-to-seed**: +0.078, +0.060, +0.061, +0.048, +0.049 — always positive,
+   sd 0.0122. The 2-sd detection threshold for a damage *difference* is **0.0244**.
+2. **The dense baseline is not**: it spans 0.1720 across the same seeds, ~6x the damage sd. So
+   unpaired comparisons that rely on the dense number, rather than a paired difference, inherit a much
+   larger floor.
+
+**FLOOR-2, wall clock**, identical step, 6 interleaved reps in one process: 22.17-22.35 ms, **spread
+1.008x**. But across *processes* the same configuration measured 260.4 vs 146.7 ms in O14. So the
+wall-clock floor is not one number:
+
+| scope | spread |
+|---|---:|
+| within one process, interleaved | **1.01x** |
+| across processes / sessions | **up to 1.78x** |
+
+### Correcting 5d: the dominant obstacle is configuration, not noise
+
+With the seed floor measured, the six withdrawals can be scored honestly:
+
+| withdrawn result | effect | floor | effect/floor | verdict |
+|---|---:|---:|---:|---|
+| E19 Lion at 5% | +0.246 (0.311 vs 0.065) | 0.0244 | **10.1** | resolvable by seeds alone |
+| E25 boundary-fraction "doubling" | +0.082 | 0.0244 | 3.4 | resolvable |
+| E26 staleness advantage | +0.550 | 0.0244 | 22.5 | resolvable |
+| A14 23x amplification | 23x claimed vs ~1x measured | — | 23 | not a floor problem |
+| E20/A38 speedup | 1.02-1.72x | 0.78 | **0.9** | genuinely below the wall-clock floor |
+| naive skip speedup | 3.6-4.5x | 0.78 | 4.6 | above the floor, and it replicates |
+
+**Three of the four quality casualties were 3-23x above the seed floor.** Seed noise was never their
+problem. What killed them is that the same nominal comparison returns a different magnitude under a
+different configuration — E19's Lion damage is +0.34 while E23's is +0.065 for what is nominally the
+same experiment. That is a *systematic* shift of ~0.28 between configurations, an order of magnitude
+above the seed floor.
+
+So the corrected protocol statement is:
+
+> The obstacle is not statistical noise. It is **configuration dependence**: the measured effect size
+> moves by more than 5x between configurations that a reader would consider equivalent. A paired
+> comparison inside one configuration resolves differences of 0.024; a comparison that crosses
+> configurations has an unmeasured floor of at least 0.28. Therefore a result must be *replicated
+> under a second configuration* before it is believed — and no amount of seeding substitutes for that.
+
+This is a sharper and more useful claim than 5d's, and it is what the six withdrawals actually
+demonstrate: every one of them was a single-configuration result. It also explains why A23 survived:
+E28 replicated it across 3 seeds **and 2 run lengths**, i.e. across configurations.
+
+Only the wall-clock casualties are genuine noise-floor cases, and there the floor is the
+across-process spread of up to 1.78x.

@@ -1,0 +1,79 @@
+{
+  "config": {
+    "steps": 300,
+    "val_batches": 8,
+    "bs": 8,
+    "block": 256,
+    "ctx": 256,
+    "dim": 384,
+    "layers": 6,
+    "heads": 6,
+    "lr": 0.0002,
+    "seeds": 5,
+    "timing_steps": 10,
+    "timing_reps": 6,
+    "chars": 60000000,
+    "device": "cuda",
+    "wait_free_gb": 2.0,
+    "out": "/root/qcc/review20260922/e31.json"
+  },
+  "quality": {
+    "runs": [
+      {
+        "seed": 0,
+        "dense": 2.7108,
+        "sparse05": 2.7888,
+        "damage": 0.078
+      },
+      {
+        "seed": 1,
+        "dense": 2.5603,
+        "sparse05": 2.6207,
+        "damage": 0.0604
+      },
+      {
+        "seed": 2,
+        "dense": 2.5388,
+        "sparse05": 2.5995,
+        "damage": 0.0607
+      },
+      {
+        "seed": 3,
+        "dense": 2.6124,
+        "sparse05": 2.6604,
+        "damage": 0.048
+      },
+      {
+        "seed": 4,
+        "dense": 2.6283,
+        "sparse05": 2.677,
+        "damage": 0.0487
+      }
+    ],
+    "dense_mean": 2.6101,
+    "dense_sd": 0.0672,
+    "dense_spread": 0.172,
+    "damage_mean": 0.0592,
+    "damage_sd": 0.0122,
+    "damage_spread": 0.03
+  },
+  "wallclock": {
+    "times_ms": [
+      22.17,
+      22.18,
+      22.22,
+      22.35,
+      22.24,
+      22.26
+    ],
+    "median_ms": 22.23,
+    "min_ms": 22.17,
+    "max_ms": 22.35,
+    "spread": 1.008
+  },
+  "detectable": {
+    "min_damage_difference (2 sd)": 0.0244,
+    "min_speedup (max/min)": 1.008,
+    "note": "a damage difference below 2 sd, or a speedup below the observed spread, cannot be distinguished from the measurement on this setup"
+  }
+}
