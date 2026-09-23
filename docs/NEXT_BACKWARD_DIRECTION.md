@@ -1244,3 +1244,53 @@ So the honest state of the method layer:
 * The lesson repeats the two earlier ones (E19, E20): a single schedule length and a single data
   budget is not enough to establish an optimizer comparison. Here the reversal came from changing
   only how much data the run consumed.
+
+
+---
+
+## 4n. O11 applied to the project's oldest result: the 23x amplification asymmetry does not hold
+
+A14 has been the anchor of this document since the first round: "amplification is a joint property of
+the optimizer and its state — median 0.015 for SGD, 0.126 for AdamW, **2.95 for Lion**", i.e. Lion
+~23x AdamW. Three candidate comparisons had already reversed under the O11 protocol (F10, F11, F12),
+so the protocol was finally applied to this one.
+
+Protocol: E23's risk predictor, AdamW and Lion at 5% density, **2 seeds x 2 run lengths** (the two
+axes that broke the previous three results). `results/e27_s*.json`.
+
+**Cross-optimizer amplification ratio (each optimizer's own risk score at its own density):**
+
+| run length | seed | AdamW risk | Lion risk | Lion / AdamW |
+|---:|---:|---:|---:|---:|
+| 200 | 0 | 0.8222 | 0.7744 | **0.94x** |
+| 200 | 1 | 0.8217 | 0.7665 | **0.93x** |
+| 800 | 0 | 0.8155 | 0.9014 | **1.11x** |
+| 800 | 1 | 0.8217 | 0.9046 | **1.10x** |
+
+**The ratio is 0.93-1.11x, not 23x**, and it is stable across both seeds at each length. In the same
+runs Lion's held-out loss at 5% density (2.8338 / 2.8283 / 2.6970 / 2.7030) is *lower* than AdamW's
+(2.8754 / 2.8758 / 2.7427 / 2.7348) in all four, which agrees with the seeded E19 reversal (F10) and
+with A22.
+
+Two candidate explanations were tested and neither rescues A14:
+
+* **"Lion's update has small support."** Measured: both optimizers have ~99.6% support and per-element
+  rms of 0.78 (AdamW) vs 1.00 (Lion). Dead.
+* **"The E23 risk score is not E18's A_b."** That is true — they are different statistics — but a
+  direct inline reproduction of E18's ratio was itself unreliable (my normalisation produced a
+  zero gradient-MSE term), so **no usable number survives from that check** and it is not reported.
+  What is solid is the protocol table above, which measures the applied damage predictor twice per
+  configuration and is consistent with all three independent end-to-end results.
+
+**A14 is therefore withdrawn.** What remains from the optimizer-dimension work:
+
+* E18's *within-optimizer* structure — that Lion's amplification grows with state age (0.78 -> 3.06
+  from warmup 5 to 120) and SGD's does not — was a ratio measurement at fixed state age and has not
+  been contradicted; but it too now needs the two-axis protocol before it is quoted.
+* A32: Lion reaches a lower held-out loss than AdamW at every-1, in both regimes.
+* The most defensible statement about the optimizer dimension is now the *weakest* one: **the
+  optimizers differ, and on this corpus at this scale Lion is not the fragile one** — the opposite of
+  what the first three rounds of this project concluded.
+
+This is the fourth withdrawal. All four share one cause: an effect size below the variation between
+regimes, established by varying one axis (a seed, a corpus, a run length) at a time.
