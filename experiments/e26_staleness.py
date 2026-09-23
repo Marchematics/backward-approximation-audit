@@ -102,7 +102,11 @@ def run(opt_name, every, args, train, val, vocab, dev, seed=0):
     #   "skip"   -- the backward is skipped and no update is applied at all. The control: it isolates
     #               how much of the "reuse" behaviour is just the extra progress from re-applying.
     reuse = args.mechanism == "reuse"
-    for i in range(args.steps):
+    bytes_per_step = args.bs * args.block
+    n_steps = args.steps
+    if args.max_mb_seen > 0:
+        n_steps = min(n_steps, int(args.max_mb_seen * 1e6 / bytes_per_step))
+    for i in range(n_steps):
         x, y = batch(train, i)
         fresh = (i % every == 0)
         if fresh:
@@ -120,16 +124,21 @@ def run(opt_name, every, args, train, val, vocab, dev, seed=0):
                         p.grad = c.clone()
             opt.step(fresh=fresh)
         opt.zero_grad()
-        if i % args.probe_every == 0 or i == args.steps - 1:
+        if i % args.probe_every == 0 or i == n_steps - 1:
             pv = fixed_probe()
             probe_curve.append(round(pv, 4))
-            if i % (args.probe_every * 2) == 0 or i == args.steps - 1:
+            if i % (args.probe_every * 2) == 0 or i == n_steps - 1:
                 tl = float(loss.item()) if fresh else float("nan")
                 print(f"  [{opt_name} every {every} {args.mechanism}] step {i:5d} "
                       f"train {tl:.4f} probe {pv:.4f} ({time.time()-t0:.0f}s)", flush=True)
     res = {"optimizer": opt_name, "backward_every": every, "mechanism": args.mechanism,
+           "min_probe": min(probe_curve) if probe_curve else None,
            "probe_start": probe_curve[0], "probe_end": probe_curve[-1],
            "probe_curve": probe_curve,
+           "steps_run": n_steps,
+           "mb_seen": round(n_steps * bytes_per_step / 1e6, 3),
+           "backward_passes": n_steps // every,
+           "probe_auc": round(sum(probe_curve) / len(probe_curve), 4) if probe_curve else None,
            "sec": round(time.time() - t0, 1)}
     del model, opt
     if dev == "cuda":
@@ -155,7 +164,9 @@ def main():
     ap.add_argument("--optimizers", default="adamw,lion")
     ap.add_argument("--schedules", default="1,2,4,8")
     ap.add_argument("--mechanism", default="reuse", choices=["reuse", "skip"])
-    ap.add_argument("--chars", type=int, default=60_000_000)
+    ap.add_argument("--chars", type=int, default=200_000_000)
+    ap.add_argument("--max-mb-seen", type=float, default=0.0,
+                    help="stop after this many MB of training data have been consumed (0 = no cap)")
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--wait-free-gb", type=float, default=1.5)
     ap.add_argument("--out", default=os.path.join(os.path.dirname(os.path.abspath(__file__)),

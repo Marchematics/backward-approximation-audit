@@ -1204,3 +1204,43 @@ The measurements say Lion should be asked to postpone, and AdamW to neither.
    enough to keep held-out loss near 2.5-3.0 would be the honest confirmation. That experiment is
    specified and not yet run.
 3. One model, one architecture, one seed, byte-level data.
+
+
+---
+
+## 4m. Retraction: the E26 "Lion tolerates staleness" result does not survive a longer schedule
+
+4l reported that Lion extracts 3.25x more progress per backward pass than AdamW at every-1 and 2.27x
+at every-2, and proposed a per-optimizer skipping schedule. That was measured at 1000 steps on a 75M
+corpus. Running the same comparison for longer at a matched data budget reverses it.
+
+Two runs, same code, same probe, same optimizers at their calibrated lr; the only change is how much
+training data is consumed:
+
+| every | 75M corpus, 2 MB seen, 1000 steps | | | 198M corpus, 5 MB seen, 1953 steps | | |
+|---:|---:|---:|---:|---:|---:|---:|
+| | AdamW end | Lion end | Lion adv. | AdamW end | Lion end | Lion adv. |
+| 1 | 0.0760 | 0.0234 | **+0.053** | 3.0412 | 2.6381 | **+0.403** |
+| 2 | 0.9824 | 0.4325 | **+0.550** | 3.8239 | 3.8674 | **-0.044** |
+| 4 | 2.6978 | 2.7156 | -0.018 | 4.5534 | 4.8473 | **-0.294** |
+| 8 | 2.7839 | 2.7606 | +0.023 | 8.3420 | 8.8479 | **-0.506** |
+
+**Lion's advantage at every-2 (+0.55) becomes a disadvantage (-0.044) once the run is longer and the
+data budget larger.** The A30 rows are withdrawn.
+
+What this looks like mechanistically: Lion's early advantage is a *speed-to-fit* effect. Its probe
+curve runs ahead early (2.36 at step 600 against AdamW's 2.64) but it is fitting the training stream
+faster, and when the schedule is sparse the fit is worse — in the matched run Lion at every-2 starts
+at 5.72 and *rises to 9.09* before coming back, i.e. stale sign updates actively push it away before
+recovering. AdamW's stale updates are wrong in a smoother way.
+
+So the honest state of the method layer:
+
+* **No per-optimizer skipping rule is supported by these measurements.** The E26 effect was
+  regime-dependent and is not a property of the update rule in the way 4l claimed.
+* The one asymmetry that has replicated across every run is much weaker: Lion reaches a *lower*
+  held-out loss than AdamW at every-1 in both regimes (+0.053 and +0.403), which is a statement about
+  optimisation speed, not about skipping.
+* The lesson repeats the two earlier ones (E19, E20): a single schedule length and a single data
+  budget is not enough to establish an optimizer comparison. Here the reversal came from changing
+  only how much data the run consumed.
