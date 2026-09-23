@@ -1,0 +1,73 @@
+{
+  "config": {
+    "steps": 2000,
+    "probe_at": 1000,
+    "val_batches": 8,
+    "bs": 8,
+    "block": 256,
+    "ctx": 256,
+    "dim": 128,
+    "layers": 2,
+    "heads": 2,
+    "lr": 0.0001,
+    "b1": 0.9,
+    "b2": 0.95,
+    "eps": 1e-08,
+    "mask_scope": "2d",
+    "seed": 4,
+    "train_offset": 0,
+    "densities": "1.0,0.05",
+    "optimizers": "adamw,lion",
+    "lr_map": "sgd=3e-4,adamw=2e-4,lion=1e-4",
+    "chars": 200000000,
+    "device": "cuda",
+    "wait_free_gb": 2.0,
+    "out": "/root/qcc/review20260922/o18_seed4.json"
+  },
+  "rows": [
+    {
+      "optimizer": "adamw",
+      "keep_frac": 1.0,
+      "auc": 2.7236,
+      "val_loss": 6.5751,
+      "final_loss": 2.5748,
+      "risk_sgd": 0.0,
+      "risk_adamw": 0.0,
+      "risk_lion": 0.0,
+      "flip_frac_of_dropped": 0.0
+    },
+    {
+      "optimizer": "adamw",
+      "keep_frac": 0.05,
+      "auc": 2.9372,
+      "val_loss": 8.0283,
+      "final_loss": 2.6388,
+      "risk_sgd": 3e-06,
+      "risk_adamw": 0.770898,
+      "risk_lion": 1.474042,
+      "flip_frac_of_dropped": 0.706274
+    },
+    {
+      "optimizer": "lion",
+      "keep_frac": 1.0,
+      "auc": 2.7626,
+      "val_loss": 6.8716,
+      "final_loss": 2.5563,
+      "risk_sgd": 0.0,
+      "risk_adamw": 0.0,
+      "risk_lion": 0.0,
+      "flip_frac_of_dropped": 0.0
+    },
+    {
+      "optimizer": "lion",
+      "keep_frac": 0.05,
+      "auc": 2.925,
+      "val_loss": 8.8094,
+      "final_loss": 2.6053,
+      "risk_sgd": 0.0,
+      "risk_adamw": 0.91013,
+      "risk_lion": 0.862932,
+      "flip_frac_of_dropped": 0.627465
+    }
+  ]
+}

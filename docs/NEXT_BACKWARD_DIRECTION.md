@@ -1690,3 +1690,54 @@ from the turnover points measured here. The correct statement is narrower:
 The classifier is the reusable artifact: given a model, a corpus and a step budget, measure the
 held-out curve first and report the turnover point, because any comparison past it is measuring the
 memorisation race rather than the treatment. For this setup that curve is now measured.
+
+
+---
+
+## 5h. O18: the attempt to validate the classifier failed, and it shows the classifier is not sufficient
+
+The plan was to test the mechanism account directly: run the same AdamW-vs-Lion comparison *above* the
+turnover point, where the explanation predicts the effect should become small and stable. The
+configuration used (0.5M model, 128-dim, 2 layers, 2000 steps on the 198 MB corpus) was chosen from
+E32's curve as the one that never turned over.
+
+**It produced a consistently positive effect — all five seeds — and the configuration is nevertheless
+invalid:**
+
+| seed | dense held-out | AdamW damage | Lion damage | Lion − AdamW |
+|---:|---:|---:|---:|---:|
+| 0 | 7.1019 | 0.1591 | 2.7084 | +2.5493 |
+| 1 | 6.6800 | 0.8628 | 2.4179 | +1.5551 |
+| 2 | 6.0904 | 1.7395 | 2.9400 | +1.2005 |
+| 3 | 6.2051 | 1.6678 | 2.6582 | +0.9904 |
+| 4 | 6.7233 | 1.4532 | 1.9378 | +0.4846 |
+
+mean +1.3560, sd 0.7715.
+
+### Why this configuration cannot be used either
+
+* **The dense model is not learning.** Final training loss 2.57 against a held-out loss of 7.84
+  (seed 0) — for a 256-symbol vocabulary, uniform prediction is ln(256) = 5.55, so the held-out
+  number is worse than chance while the training number is far below it. The model has memorised the
+  training slice and generalises worse than random.
+* **Sparsity damages AdamW enormously here** (damage 0.16 to 1.74 across seeds), so the comparison is
+  between two badly-behaved configurations rather than between two healthy ones.
+* **The effect's sign is inconsistent with the mechanism's prediction.** Above the turnover point the
+  account predicts a *small, stable* effect. What was measured is a large and highly variable one
+  (sd 0.77 against a mean of 1.36), which is the signature of the same instability the classifier was
+  supposed to remove.
+
+### The honest conclusion
+
+**E32's turnover curve is a necessary diagnostic but not a sufficient regime selector.** A model can
+be above its turnover point in the sense that the held-out curve has not yet bottomed, while still
+failing to generalise at all, because the constraint is the corpus's distinct-content budget rather
+than the token count. The curve tells you when held-out loss starts to degrade; it does not tell you
+whether the run was ever healthy.
+
+**Consequence for the project: O18 is closed without a verdict, and the mechanism account in 5g is
+unconfirmed.** The claim that remains standing is the weaker, purely descriptive one from O16: one
+nominal comparison returns between −0.008 and +1.09 depending on configuration, and the large values
+coincide with configurations whose dense held-out loss is low. *Why* the effect varies, and whether a
+correct regime makes it stable, is not established and would need a corpus large enough to support a
+healthy run — which this setup does not have.
