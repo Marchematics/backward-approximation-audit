@@ -1040,3 +1040,59 @@ So the correct claims are:
 The lesson generalises past this project: single-run optimizer comparisons at this model scale are
 not evidence. Both retractions in this document (E20 and E19) came from the same root cause — a
 comparison whose noise floor was never measured.
+
+
+---
+
+## 4j. E25: the sign-boundary fraction grows with scale — a prediction that needs no training run
+
+The review asked for a predictor derived from each optimizer's update rule (E23 delivered it within
+an optimizer) and then for scale. Putting the two together produces a question that is answerable
+*without* any end-to-end comparison, which matters because every 1B training comparison attempted in
+this project failed to be discriminative (X1, and the flat-probe runs of E24).
+
+Lion's risk is `P[sign(m_i + delta_i) != sign(m_i)]`, a property of how many coordinates sit close
+to the sign boundary. The dimensionless quantity that decides this is `|g_i| / sqrt(v_i)`. So:
+
+> **as models get wider, does a larger or smaller fraction of coordinates sit within a fixed
+> relative distance of the sign boundary?**
+
+`experiments/e25_boundary_fraction.py` measures exactly that, pooling all 2-D weights, after a short
+Adam-moment warm-up. Batch size is a confound for this statistic (a smaller batch means a noisier
+gradient relative to the accumulated second moment), so it was controlled:
+
+| scale | batch | P(<0.01) | P(<0.05) | P(<0.1) | P(<0.25) | P(<0.5) | P(<1.0) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| compact 10.9M | 4 | 0.0114 | 0.0280 | 0.0488 | 0.1123 | 0.2277 | 0.5458 |
+| compact 57.3M | 4 | 0.0068 | 0.0228 | 0.0428 | 0.1043 | 0.2161 | 0.5329 |
+| compact 10.9M | 1 | 0.0137 | 0.0396 | 0.0722 | 0.1701 | 0.3357 | 0.6585 |
+| compact 57.3M | 1 | 0.0091 | 0.0348 | 0.0669 | 0.1638 | 0.3291 | 0.6574 |
+| **Llama-1.2B** | 1 | **0.0230** | **0.0850** | **0.1487** | **0.3048** | **0.5037** | **0.7524** |
+
+Three findings, in order of how much I trust them:
+
+1. **At matched batch size, the near-boundary fraction roughly doubles from 57M to 1.2B**
+   (P(<0.1): 0.0669 -> 0.1487; P(<0.5): 0.3291 -> 0.5037). Sign-based optimizers therefore face about
+   twice as many vulnerable coordinates at 1B as at 57M.
+2. **Batch size moves the statistic in the opposite direction and by a similar amount** (57M:
+   P(<0.1) 0.0428 at bs 4 vs 0.0669 at bs 1). This is not a nuisance — it is a second, independent
+   lever: smaller batches push more coordinates toward the boundary, which is exactly the regime
+   large-model training lives in.
+3. **Between 11M and 57M the fraction *falls* at fixed batch size** (0.0722 -> 0.0669). So the trend
+   is not a smooth function of parameter count; the jump happens somewhere between 57M and 1.2B, and
+   with three points and one architecture family this is a hint, not a law.
+
+### Why this matters more than another training comparison
+
+It is a **scaling prediction with a mechanism, measurable in minutes, that requires no learning-rate
+calibration and no end-to-end run**: sign-family optimizers should suffer disproportionately more
+from a fixed relative backward-approximation error as models grow, and the measured exposure roughly
+doubles by 1B. The prediction is falsifiable in one direction (measure the fraction at 3B-7B; if it
+does not keep rising, the effect saturates and the practical claim weakens) and it explains the
+otherwise-puzzling pattern that the 40M Lion comparisons disagreed with each other — at 40M the
+exposure is small enough that run-to-run noise dominates it (F10).
+
+What it does **not** do is measure damage. It measures the *exposure* that the damage mechanism acts
+on. Closing that gap needs a discriminative 1B training configuration, which this project has not
+yet achieved: at lr 3e-6 the fixed-probe held-out loss was flat to 0.008 over 600 steps
+(2.7734 -> 2.7891), so the runs cannot resolve a density effect either way.

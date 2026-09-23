@@ -52,6 +52,10 @@ numbers are the exception and are labelled as such.
 | F10 | "At 5% density Lion pays 4.8x what AdamW pays" | not reproducible under seeding: the three dense baselines span 0.29, larger than the effect, and the published +0.311 used the lowest of them. Seeded five-run comparison reverses the ordering (A22) | `results/e19_repro_s*.json`, `results/e23_*.json` |
 | F9 | "Graph skip + step-norm correction = 1.72x at +0.003 with the embedding always trained" | the embedding was never trained: the prefix forward ran under `no_grad` and the boundary was detached, so `tok.weight`/`pos.weight` had no gradient; and all three "seed" runs used `seed=0`. The corrected, gradient-complete construction (replay) runs at 0.82x | `results/e21_grad_reach.json`, `results/e22_realskip_fixed.json` |
 
+| A25 | **The near-sign-boundary fraction roughly doubles from 57M to 1.2B at matched batch size**: P(\|g\|/sqrt(v) < 0.1) is 0.0669 -> 0.1487 and P(< 0.5) is 0.3291 -> 0.5037. Sign-family optimizers face ~2x more vulnerable coordinates at 1B | `results/e25_1b.json`, `results/e25_bs1.json` | `python3 experiments/e25_boundary_fraction.py --pretrained --bs 1` and `--bs 1` (compact) |
+| A26 | Batch size moves the same statistic in the opposite direction and by a similar magnitude: at 57M, P(<0.1) is 0.0428 at bs 4 vs 0.0669 at bs 1 | `results/e25_bs4.json`, `results/e25_bs1.json` | same script with `--bs 4` |
+| A27 | Between 11M and 57M the fraction *falls* at fixed batch size (0.0722 -> 0.0669), so the scaling is not smooth in parameter count | same files | same command |
+
 ## B2. Configuration failures (recorded so they are not repeated)
 
 | # | attempt | how it failed | evidence |
@@ -75,4 +79,5 @@ held-out loss actually moves: >= 50 M characters and a learning rate calibrated 
 | O4 | ~~Can the truncated-backward saving be realised inside a training loop?~~ **answered (A19)**: yes, 1.60-2.13x at a measured +0.003 to +0.009 held-out cost | done, on a 40 M model and a byte-level corpus | remaining: scale it to a real tokenizer and a 1B model |
 | O7 | Does the Lion penalty (A17) hold at scale and on a real tokenizer? | this is the claim most likely to change practice, and it rests on one 40 M byte-level run | E19 on a 1B pretrained checkpoint with a real tokenizer is implemented and running (`--pretrained --opt8bit`); results not yet in |
 | O8 | Can the dropped blocks' updates be kept current cheaply, without a replay forward? | E22 shows the obvious correction is slower than dense, so the system story depends on finding a compensation that is not recomputation | carry the dropped blocks' optimizer state with an estimate, then measure quality and step time |
+| O9 | Does the near-boundary fraction keep rising past 1B, and does measured Lion damage follow it? | A25 is the mechanism-side scaling prediction; if the fraction saturates, the practical claim weakens | measure E25 at 3B-7B; pair with a discriminative Lion/AdamW training run at 1B (needs a configuration whose fixed-probe loss actually moves) |
 | O5 | Does the quality-neutral point move with model scale and task? | the 5%/20%/50% cost curve is one corpus and one architecture | repeat A6 at two model sizes and a second corpus |
