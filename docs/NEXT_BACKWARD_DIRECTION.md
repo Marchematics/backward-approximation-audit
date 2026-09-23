@@ -1096,3 +1096,51 @@ What it does **not** do is measure damage. It measures the *exposure* that the d
 on. Closing that gap needs a discriminative 1B training configuration, which this project has not
 yet achieved: at lr 3e-6 the fixed-probe held-out loss was flat to 0.008 over 600 steps
 (2.7734 -> 2.7891), so the runs cannot resolve a density effect either way.
+
+
+---
+
+## 4k. Correction to 4j: the boundary fraction is a family effect, not a scaling law
+
+4j concluded from three points that "the near-boundary fraction roughly doubles from 57M to 1.2B" and
+proposed it as a scaling prediction. Adding two more checkpoints — including a *smaller* one —
+falsifies that reading. Same protocol, bs 1, `results/e25_*.json`:
+
+| model | params | P(<0.01) | P(<0.05) | P(<0.1) | P(<0.25) | P(<0.5) |
+|---|---:|---:|---:|---:|---:|---:|
+| compact GPT, from scratch | 10.9M | 0.0137 | 0.0396 | 0.0722 | 0.1701 | 0.3357 |
+| compact GPT, from scratch | 57.3M | 0.0091 | 0.0348 | 0.0669 | 0.1638 | 0.3291 |
+| **Qwen2.5-0.5B** | 494M | 0.0259 | 0.0927 | **0.1581** | 0.3106 | 0.4968 |
+| Llama-3.2-1B | 1236M | 0.0230 | 0.0850 | **0.1487** | 0.3048 | 0.5037 |
+| **Qwen2.5-1.5B** | 1544M | 0.0316 | 0.1014 | **0.1618** | 0.2997 | 0.4764 |
+
+**A 494M model has a higher fraction than both a 1.2B and a 1.5B model.** Within the Qwen family the
+fraction is flat across a 3x parameter range (0.1581 -> 0.1618). Within the from-scratch compacts it
+falls slightly (0.0722 -> 0.0669). Across the two pretrained families and the compacts there is a
+2.3x gap. So:
+
+* **The between-family / between-design difference dominates the within-family scaling difference.**
+  The statistic is real and cheap to measure, but it is a property of the model's design and
+  initialization, not of its size.
+* The "doubling from 57M to 1.2B" in 4j was a comparison between a from-scratch byte-level model and
+  a pretrained subword model. That is a confound, not a scaling result, and the sentence is
+  withdrawn.
+* The batch-size effect measured in 4j (1.56x at 57M, bs 4 -> bs 1) is of the same order as the
+  family effect and larger than any within-family scale effect. It remains a genuine second lever.
+
+### What survives, and it is a cleaner statement
+
+> **The fraction of coordinates sitting near the sign boundary — the quantity that sets a
+> sign-based optimizer's exposure to backward-approximation error — varies by more than 2x across
+> model designs and is nearly flat with parameter count inside a design. Optimizer and compression
+> policies calibrated on one model family therefore do not transfer to another, for the same reason
+> the AdamW-tuned sparsity budgets did not transfer to Lion (A22).**
+
+That is consistent with everything else in this document: the budget that is safe is a property of
+the (optimizer, model design, batch size) triple, not a universal constant. It is also why the 40M
+comparisons disagreed with each other — at that scale the exposure is small and family-dependent.
+
+The honest limitation: the compacts are trained from scratch on byte-level data while the pretrained
+models use subword tokenizers, so the 2.3x gap mixes tokenizer, initialization, and architecture.
+Separating those needs a within-tokenizer, within-family width sweep trained from scratch, which is
+the next version of this measurement.

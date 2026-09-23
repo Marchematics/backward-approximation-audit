@@ -1,0 +1,29 @@
+{
+  "config": {
+    "steps": 30,
+    "bs": 1,
+    "chars": 8000000,
+    "lr": 0.0001,
+    "b1": 0.9,
+    "b2": 0.95,
+    "device": "cuda",
+    "wait_free_gb": 5.0,
+    "pretrained": true,
+    "model": "/root/qcc/models/Qwen2.5-1.5B",
+    "out": "/root/qcc/review20260922/e25_qwen15.json"
+  },
+  "scales": [
+    {
+      "tag": "pretrained 1544M params",
+      "numel_m": 1543.569408,
+      "frac_below": {
+        "0.01": 0.031589,
+        "0.05": 0.101421,
+        "0.1": 0.161796,
+        "0.25": 0.299713,
+        "0.5": 0.476412,
+        "1.0": 0.714075
+      }
+    }
+  ]
+}
