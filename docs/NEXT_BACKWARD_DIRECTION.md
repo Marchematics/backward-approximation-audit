@@ -1354,3 +1354,64 @@ quoted as robustness.
 
 The honest one-line summary of fifteen rounds: **the reliable object is a cheap risk predictor and a
 regime guard, not a speedup.**
+
+
+---
+
+## 4p. E29: the risk score does not screen different *kinds* of approximation, only budgets
+
+The plan for this round was to turn A23 into a usable artifact: a pre-training screen that ranks
+candidate backward-approximation **schemes** for the optimizer you are actually using. E29 tests the
+premise directly — seven schemes at named budgets, two optimizers, risk and damage measured in the
+same run. `results/e29_scheme_screen*.json`.
+
+**The premise fails.** AdamW, damage against its own dense baseline:
+
+| scheme | risk_adamw | damage |
+|---|---:|---:|
+| dense | 0 | — |
+| white (5% relative noise) | **20196** | **+0.0017** |
+| topk50 | 0.492 | +0.0051 |
+| rank32 (low rank) | **487811** | +0.0132 |
+| quant4 (4-bit values) | 0.671 | +0.0251 |
+| topk05 | 0.832 | +0.0774 |
+| rand05 | 0.949 | +0.0903 |
+
+The score ranks `white` and `rank32` as catastrophically risky (2e4 and 5e5) when they are the two
+**least** damaging non-dense schemes, while `quant4` — the third most damaging — scores 0.67, lower
+than the two sparsity schemes that cost more. The ordering by risk is
+`topk50, quant4, topk05, rand05, white, rank32`; by damage it is
+`white, topk50, rank32, quant4, topk05, rand05`. Not the same order.
+
+### What does survive, stated as narrowly as the evidence allows
+
+**Within one approximation family, driven by budget, the score is monotone.** That is A23's actual
+claim, and E29 reproduces it:
+
+| optimizer | risk at topk50 -> topk05 | damage at topk50 -> topk05 |
+|---|---|---|
+| AdamW | 0.492 -> 0.832 | +0.0051 -> +0.0774 |
+| Lion | 0.339 -> 0.866 | -0.0050 -> +0.0835 |
+
+So the artifact is real but much smaller than the plan assumed:
+
+> **The optimizer-specific risk score is a budget-calibration tool for a fixed approximation family
+> and a fixed optimizer.** It tells you how far you can tighten a sparsity ratio before that
+> optimizer starts paying. It does **not** tell you which of two different approximation schemes is
+> safer, because the schemes differ in the *structure* of their error (support change vs value error
+> vs orthogonal residual) and a scalar built from `delta/g` and sign flips cannot separate those.
+
+### A second defect found while measuring, relevant to anyone reusing the score
+
+`risk_adamw`'s `delta_i/g_i` term diverges on coordinates with small `|g_i|`: `rank32` returns
+4.9e5 and `white` 2.0e4 while both are nearly benign in practice. E23's original numbers were bounded
+only because a top-k budget errs on the *largest* gradients, where the ratio is small — the same
+statistic is unusable for schemes that perturb small gradient coordinates. Any reuse of this metric
+needs a floor on `|g_i|`, which would change E23's values too and has not been re-derived.
+
+### Consequence for the project
+
+The tool I planned to build does not exist in the form proposed. What exists is:
+* A23 as validated (E28): monotone within a family, 3 seeds x 2 lengths, 0.80-1.00 rank correlation.
+* A34: a regime guard that must accompany any damage number.
+* This entry: the boundary of the above — it does not generalise across error structures.

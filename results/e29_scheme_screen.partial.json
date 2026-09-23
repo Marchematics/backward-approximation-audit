@@ -1,0 +1,248 @@
+{
+  "config": {
+    "steps": 500,
+    "probe_at": 250,
+    "probe_every": 100,
+    "val_batches": 8,
+    "bs": 8,
+    "block": 256,
+    "ctx": 256,
+    "dim": 384,
+    "layers": 6,
+    "heads": 6,
+    "rank": 32,
+    "b1": 0.9,
+    "b2": 0.95,
+    "eps": 1e-08,
+    "lr_map": "sgd=3e-4,adamw=2e-4,lion=1e-4",
+    "optimizers": "adamw,lion",
+    "schemes": "dense,topk50,topk05,rand05,rank32,quant4,white",
+    "chars": 60000000,
+    "device": "cuda",
+    "wait_free_gb": 2.0,
+    "out": "/root/qcc/review20260922/e29.json",
+    "lr": 0.0001
+  },
+  "runs": [
+    {
+      "optimizer": "adamw",
+      "scheme": "dense",
+      "probe_start": 5.1936,
+      "probe_end": 2.6783,
+      "probe_curve": [
+        5.1936,
+        2.896,
+        2.7882,
+        2.708,
+        2.6486,
+        2.6783
+      ],
+      "sec": 21.1,
+      "risk_sgd": 0.0,
+      "risk_adamw": 0.0,
+      "risk_lion": 0.0,
+      "frac_changed": 0.0,
+      "regime_generalising": true
+    },
+    {
+      "optimizer": "adamw",
+      "scheme": "topk50",
+      "probe_start": 5.261,
+      "probe_end": 2.6834,
+      "probe_curve": [
+        5.261,
+        2.905,
+        2.7905,
+        2.707,
+        2.65,
+        2.6834
+      ],
+      "sec": 18.9,
+      "risk_sgd": 0.0,
+      "risk_adamw": 0.492134,
+      "risk_lion": 0.795762,
+      "frac_changed": 0.342896,
+      "regime_generalising": true
+    },
+    {
+      "optimizer": "adamw",
+      "scheme": "topk05",
+      "probe_start": 5.575,
+      "probe_end": 2.7557,
+      "probe_curve": [
+        5.575,
+        3.1223,
+        2.8762,
+        2.7895,
+        2.7314,
+        2.7557
+      ],
+      "sec": 19.7,
+      "risk_sgd": 0.0,
+      "risk_adamw": 0.831676,
+      "risk_lion": 2.032676,
+      "frac_changed": 0.715089,
+      "regime_generalising": true
+    },
+    {
+      "optimizer": "adamw",
+      "scheme": "rand05",
+      "probe_start": 5.6738,
+      "probe_end": 2.7686,
+      "probe_curve": [
+        5.6738,
+        3.249,
+        2.9642,
+        2.8287,
+        2.7672,
+        2.7686
+      ],
+      "sec": 530.6,
+      "risk_sgd": 2e-06,
+      "risk_adamw": 0.949148,
+      "risk_lion": 3.994989,
+      "frac_changed": 0.505125,
+      "regime_generalising": true
+    },
+    {
+      "optimizer": "adamw",
+      "scheme": "rank32",
+      "probe_start": 5.1933,
+      "probe_end": 2.6915,
+      "probe_curve": [
+        5.1933,
+        2.9008,
+        2.7943,
+        2.7177,
+        2.6595,
+        2.6915
+      ],
+      "sec": 558.0,
+      "risk_sgd": 0.0,
+      "risk_adamw": 487811.443383,
+      "risk_lion": 0.293935,
+      "frac_changed": 0.117323,
+      "regime_generalising": true
+    },
+    {
+      "optimizer": "adamw",
+      "scheme": "quant4",
+      "probe_start": 5.3045,
+      "probe_end": 2.7034,
+      "probe_curve": [
+        5.3045,
+        2.976,
+        2.8347,
+        2.7374,
+        2.6803,
+        2.7034
+      ],
+      "sec": 23.9,
+      "risk_sgd": 0.0,
+      "risk_adamw": 0.671247,
+      "risk_lion": 1.280167,
+      "frac_changed": 0.344376,
+      "regime_generalising": true
+    },
+    {
+      "optimizer": "adamw",
+      "scheme": "white",
+      "probe_start": 5.1952,
+      "probe_end": 2.68,
+      "probe_curve": [
+        5.1952,
+        2.8984,
+        2.7908,
+        2.7085,
+        2.6496,
+        2.68
+      ],
+      "sec": 72.2,
+      "risk_sgd": 0.0,
+      "risk_adamw": 20196.10935,
+      "risk_lion": 0.136619,
+      "frac_changed": 0.079382,
+      "regime_generalising": true
+    },
+    {
+      "optimizer": "lion",
+      "scheme": "dense",
+      "probe_start": 5.4407,
+      "probe_end": 2.6524,
+      "probe_curve": [
+        5.4407,
+        2.9226,
+        2.7954,
+        2.722,
+        2.6391,
+        2.6524
+      ],
+      "sec": 19.2,
+      "risk_sgd": 0.0,
+      "risk_adamw": 0.0,
+      "risk_lion": 0.0,
+      "frac_changed": 0.0,
+      "regime_generalising": true
+    },
+    {
+      "optimizer": "lion",
+      "scheme": "topk50",
+      "probe_start": 5.4774,
+      "probe_end": 2.6474,
+      "probe_curve": [
+        5.4774,
+        2.9262,
+        2.7953,
+        2.7235,
+        2.6378,
+        2.6474
+      ],
+      "sec": 17.5,
+      "risk_sgd": 0.0,
+      "risk_adamw": 0.496856,
+      "risk_lion": 0.33858,
+      "frac_changed": 0.340967,
+      "regime_generalising": true
+    },
+    {
+      "optimizer": "lion",
+      "scheme": "topk05",
+      "probe_start": 5.6408,
+      "probe_end": 2.7359,
+      "probe_curve": [
+        5.6408,
+        3.104,
+        2.8336,
+        2.7485,
+        2.7066,
+        2.7359
+      ],
+      "sec": 17.8,
+      "risk_sgd": 0.0,
+      "risk_adamw": 0.922552,
+      "risk_lion": 0.866189,
+      "frac_changed": 0.663481,
+      "regime_generalising": true
+    },
+    {
+      "optimizer": "lion",
+      "scheme": "rand05",
+      "probe_start": 5.6906,
+      "probe_end": 2.7411,
+      "probe_curve": [
+        5.6906,
+        3.0528,
+        2.8441,
+        2.7596,
+        2.7179,
+        2.7411
+      ],
+      "sec": 463.6,
+      "risk_sgd": 0.0,
+      "risk_adamw": 0.948729,
+      "risk_lion": 0.935212,
+      "frac_changed": 0.492885,
+      "regime_generalising": true
+    }
+  ]
+}
