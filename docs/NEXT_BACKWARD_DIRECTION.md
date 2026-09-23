@@ -1415,3 +1415,49 @@ The tool I planned to build does not exist in the form proposed. What exists is:
 * A23 as validated (E28): monotone within a family, 3 seeds x 2 lengths, 0.80-1.00 rank correlation.
 * A34: a regime guard that must accompany any damage number.
 * This entry: the boundary of the above — it does not generalise across error structures.
+
+
+---
+
+## 5c. The gradient-correct skip DOES cross over — on a deep model
+
+5b concluded that "every mechanism that removes backward work *and* keeps all gradients current is
+slower than dense", from measurements at L=6. That conclusion was too broad. It is a function of
+depth and of how much of the network is dropped, and it was never tested outside L=6.
+
+Cost structure: replay trades the **dropped prefix's backward** for a **replay forward**. Which one
+wins depends on how much of the network the prefix is and on the backward:forward cost ratio. At L=6
+with half the network dropped, the extra forward dominates. At larger L with a large dropped prefix,
+it should not.
+
+Measured with the gradient-reach instrumentation active in `e22_realskip_fixed.py` (so every arm is
+verified to give every parameter a gradient — the check E20 lacked):
+
+| depth | kept | dense | naive skip | skip_ri (gradient-correct) | skip_ri cost |
+|---|---:|---:|---:|---:|---:|
+| L=6 | 3/6 | 60.3 ms | 1.64x | 0.87x | +0.009 |
+| L=6 | 2/6 | 51.7 ms | 2.36x | 0.53x | +0.000 |
+| L=24 | 8/24 | 298.2 ms | 1.79x | 0.85x | +0.014 |
+| L=24 | 4/24 | 332.5 ms | 4.75x | **0.98x** | +0.038 |
+| L=24 | 2/24 | 305.0 ms | 1.99x | **1.02-1.23x** | +0.012-0.024 |
+
+**At L=24 with 2 of 24 blocks kept, the gradient-correct skip is 1.02-1.23x faster than dense while
+training every parameter**, at a held-out cost of +0.012 to +0.024 at equal steps. The trend is
+monotone in the dropped fraction: 0.53x (drop 67% of L=6) -> 0.85x (drop 67% of L=24) -> 0.98x (drop
+83%) -> 1.02-1.23x (drop 92%).
+
+### What this does and does not change
+
+* **Changed**: "no gradient-correct skip can beat dense" is false. There is a crossover, it is in
+  depth and in drop fraction, and it is now located. `skip_ri` is the only arm in the project that is
+  both faster than dense and complete in its gradient coverage.
+* **Not changed**: the naive skip is still 2-4.75x faster than the gradient-correct one at the same
+  budget. So the practical choice remains "much faster with frozen parameters" (the DropBP trade)
+  versus "slightly faster with every parameter trained". Anyone claiming the second should quote the
+  first as the alternative, and vice versa.
+* **Not established**: that 1.02-1.23x survives at real scale. Three points at one depth and one seed
+  are a trend, not a law; the two-axis protocol (O11) applies here too and has not been run.
+
+This is recorded as a correction to 5b, not as a headline: the honest summary is that the
+gradient-correct variant is viable but its advantage over dense is in the 1.0-1.2x band, an order of
+magnitude less than what the naive variant appears to deliver by not training its parameters.

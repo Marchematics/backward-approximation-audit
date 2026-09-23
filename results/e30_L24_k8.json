@@ -1,0 +1,70 @@
+{
+  "config": {
+    "steps": 300,
+    "warmup": 20,
+    "val_batches": 8,
+    "bs": 8,
+    "block": 256,
+    "ctx": 256,
+    "dim": 512,
+    "layers": 24,
+    "heads": 8,
+    "lr": 0.0002,
+    "b1": 0.9,
+    "b2": 0.95,
+    "keep_blocks": 8,
+    "seeds": "0",
+    "chars": 60000000,
+    "device": "cuda",
+    "wait_free_gb": 2.0,
+    "verify_grads": false,
+    "out": "/root/qcc/review20260922/e30_L24_k8.json"
+  },
+  "runs": [
+    {
+      "arm": "dense",
+      "seed": 0,
+      "k_keep": 8,
+      "lr_scale": 1.0,
+      "auc": 2.7205,
+      "val_loss": 2.7169,
+      "median_step_ms": 298.17,
+      "median_upd_norm": 1883.864,
+      "params_without_grad": null,
+      "final_loss": 2.6353,
+      "speedup_vs_dense": 1.0,
+      "norm_ratio": 1.0,
+      "val_cost": 0.0
+    },
+    {
+      "arm": "skip",
+      "seed": 0,
+      "k_keep": 8,
+      "lr_scale": 1.0,
+      "auc": 2.7186,
+      "val_loss": 2.6954,
+      "median_step_ms": 166.2,
+      "median_upd_norm": 1247.92,
+      "params_without_grad": null,
+      "final_loss": 2.607,
+      "speedup_vs_dense": 1.794,
+      "norm_ratio": 0.662,
+      "val_cost": -0.0215
+    },
+    {
+      "arm": "skip_ri",
+      "seed": 0,
+      "k_keep": 8,
+      "lr_scale": 1.5096031796910059,
+      "auc": 2.7431,
+      "val_loss": 2.7312,
+      "median_step_ms": 348.89,
+      "median_upd_norm": 1774.798,
+      "params_without_grad": null,
+      "final_loss": 2.6478,
+      "speedup_vs_dense": 0.855,
+      "norm_ratio": 0.942,
+      "val_cost": 0.0143
+    }
+  ]
+}
