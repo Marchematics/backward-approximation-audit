@@ -1643,3 +1643,50 @@ one comparison the project cared most about:
 That is a specific, quantified, and checkable claim about a class of published results, and it is the
 most defensible thing this project has. It is also the reason A23 is the only prediction that
 survived: E28 replicated it across two run lengths, i.e. across configurations, by design.
+
+
+---
+
+## 5g. E32: the regime classifier works, and it explains why nothing here was measurable
+
+O16 left a question: is the memorisation boundary predictable from a number a paper normally reports?
+E32 measures the held-out curve against **tokens per parameter** for three model sizes on a fixed
+corpus. `results/e32*.json`.
+
+| model | corpus | turnover point | held-out at turnover | held-out at end |
+|---|---:|---:|---:|---:|
+| 10.94M | 75.4 MB | **1.12 tok/param** (4.5 bytes/param) | 0.0097 | 0.2301 |
+| 2.20M | 75.4 MB | **6.38 tok/param** (25 bytes/param) | 0.0106 | 0.0371 |
+| 0.35M | 75.4 MB | **never, by 12.4 tok/param** | still falling | — |
+
+Three readings, in order of importance:
+
+1. **The turnover point is measurable and moves the way capacity predicts.** A 10.9M model trained
+   from scratch on this corpus holds out at 0.0097 and then degrades; a 0.35M model is still
+   improving when the budget runs out. So "has this run crossed into memorisation" is answerable from
+   a curve a paper could report, which is what O17 asked for.
+2. **Every configuration this project ever ran is far below its own turnover point.** The compact
+   model is 10.94M parameters and the experiments used 0.05-0.62 tok/param — between 2% and 55% of
+   the 1.12 tok/param where its held-out loss turns over. The 1B runs used 0.001-0.008 tok/param. So
+   not one optimizer comparison in twenty rounds was run in a regime where held-out loss was still
+   falling monotonically.
+3. **The corpus, not the model size, is the binding constraint.** Both 10.9M and 2.2M models reach
+   held-out ~0.01 — essentially perfect on this data — because the 75 MB slice contains far less than
+   75 MB of distinct content. A model small enough to stay in the generalising regime (0.35M) is too
+   small to be worth comparing optimizers in.
+
+### The honest scope of this, and what it is not
+
+It is **not** evidence that published work sits in the memorisation regime. Published LLM training
+sees 10^2-10^4 tokens per parameter on corpora with 10^9-10^12 distinct tokens, orders of magnitude
+from the turnover points measured here. The correct statement is narrower:
+
+> On a small, low-diversity corpus, held-out loss turns over after roughly 5-25 bytes per parameter of
+> training data, and below that turnover a comparison can be made; above it, the same nominal
+> comparison changes magnitude by more than 100x (O16). **This project's entire measurement base lies
+> below the turnover, which is why six results were withdrawn and why the one prediction that
+> survived (A23) is the one that was replicated across configurations.**
+
+The classifier is the reusable artifact: given a model, a corpus and a step budget, measure the
+held-out curve first and report the turnover point, because any comparison past it is measuring the
+memorisation race rather than the treatment. For this setup that curve is now measured.

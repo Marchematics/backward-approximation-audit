@@ -1,0 +1,287 @@
+{
+  "config": {
+    "bs": 8,
+    "block": 256,
+    "ctx": 256,
+    "dim": 384,
+    "layers": 6,
+    "heads": 6,
+    "lr": 0.0002,
+    "chars": 200000000,
+    "val_batches": 8,
+    "max_steps": 9000,
+    "probe_every": 250,
+    "device": "cuda",
+    "wait_free_gb": 2.0,
+    "out": "/root/qcc/review20260922/e32.json"
+  },
+  "model_params": 10942464,
+  "rows": [
+    {
+      "step": 0,
+      "tokens": 2048,
+      "tokens_per_param": 0.0002,
+      "train_loss": 5.6976,
+      "heldout": 5.7157
+    },
+    {
+      "step": 250,
+      "tokens": 514048,
+      "tokens_per_param": 0.047,
+      "train_loss": 2.5619,
+      "heldout": 6.6405
+    },
+    {
+      "step": 500,
+      "tokens": 1026048,
+      "tokens_per_param": 0.0938,
+      "train_loss": 2.512,
+      "heldout": 5.425
+    },
+    {
+      "step": 750,
+      "tokens": 1538048,
+      "tokens_per_param": 0.1406,
+      "train_loss": 1.9853,
+      "heldout": 5.7638
+    },
+    {
+      "step": 1000,
+      "tokens": 2050048,
+      "tokens_per_param": 0.1873,
+      "train_loss": 0.0446,
+      "heldout": 5.7549
+    },
+    {
+      "step": 1250,
+      "tokens": 2562048,
+      "tokens_per_param": 0.2341,
+      "train_loss": 0.0228,
+      "heldout": 5.7555
+    },
+    {
+      "step": 1500,
+      "tokens": 3074048,
+      "tokens_per_param": 0.2809,
+      "train_loss": 0.0123,
+      "heldout": 5.2857
+    },
+    {
+      "step": 1750,
+      "tokens": 3586048,
+      "tokens_per_param": 0.3277,
+      "train_loss": 0.0145,
+      "heldout": 5.2215
+    },
+    {
+      "step": 2000,
+      "tokens": 4098048,
+      "tokens_per_param": 0.3745,
+      "train_loss": 0.0114,
+      "heldout": 4.4965
+    },
+    {
+      "step": 2250,
+      "tokens": 4610048,
+      "tokens_per_param": 0.4213,
+      "train_loss": 0.0126,
+      "heldout": 3.3493
+    },
+    {
+      "step": 2500,
+      "tokens": 5122048,
+      "tokens_per_param": 0.4681,
+      "train_loss": 0.0182,
+      "heldout": 3.2106
+    },
+    {
+      "step": 2750,
+      "tokens": 5634048,
+      "tokens_per_param": 0.5149,
+      "train_loss": 0.0115,
+      "heldout": 2.1128
+    },
+    {
+      "step": 3000,
+      "tokens": 6146048,
+      "tokens_per_param": 0.5617,
+      "train_loss": 0.0231,
+      "heldout": 0.039
+    },
+    {
+      "step": 3250,
+      "tokens": 6658048,
+      "tokens_per_param": 0.6085,
+      "train_loss": 0.0171,
+      "heldout": 0.0134
+    },
+    {
+      "step": 3500,
+      "tokens": 7170048,
+      "tokens_per_param": 0.6552,
+      "train_loss": 0.0089,
+      "heldout": 0.0123
+    },
+    {
+      "step": 3750,
+      "tokens": 7682048,
+      "tokens_per_param": 0.702,
+      "train_loss": 0.0122,
+      "heldout": 0.0124
+    },
+    {
+      "step": 4000,
+      "tokens": 8194048,
+      "tokens_per_param": 0.7488,
+      "train_loss": 0.0123,
+      "heldout": 0.0116
+    },
+    {
+      "step": 4250,
+      "tokens": 8706048,
+      "tokens_per_param": 0.7956,
+      "train_loss": 0.0087,
+      "heldout": 0.0112
+    },
+    {
+      "step": 4500,
+      "tokens": 9218048,
+      "tokens_per_param": 0.8424,
+      "train_loss": 0.0114,
+      "heldout": 0.0117
+    },
+    {
+      "step": 4750,
+      "tokens": 9730048,
+      "tokens_per_param": 0.8892,
+      "train_loss": 0.015,
+      "heldout": 0.0107
+    },
+    {
+      "step": 5000,
+      "tokens": 10242048,
+      "tokens_per_param": 0.936,
+      "train_loss": 0.0122,
+      "heldout": 0.0124
+    },
+    {
+      "step": 5250,
+      "tokens": 10754048,
+      "tokens_per_param": 0.9828,
+      "train_loss": 0.011,
+      "heldout": 0.0102
+    },
+    {
+      "step": 5500,
+      "tokens": 11266048,
+      "tokens_per_param": 1.0296,
+      "train_loss": 0.0109,
+      "heldout": 0.0106
+    },
+    {
+      "step": 5750,
+      "tokens": 11778048,
+      "tokens_per_param": 1.0764,
+      "train_loss": 0.0116,
+      "heldout": 0.0112
+    },
+    {
+      "step": 6000,
+      "tokens": 12290048,
+      "tokens_per_param": 1.1232,
+      "train_loss": 0.0088,
+      "heldout": 0.0097
+    },
+    {
+      "step": 6250,
+      "tokens": 12802048,
+      "tokens_per_param": 1.1699,
+      "train_loss": 0.0146,
+      "heldout": 0.0107
+    },
+    {
+      "step": 6500,
+      "tokens": 13314048,
+      "tokens_per_param": 1.2167,
+      "train_loss": 0.0186,
+      "heldout": 0.0105
+    },
+    {
+      "step": 6750,
+      "tokens": 13826048,
+      "tokens_per_param": 1.2635,
+      "train_loss": 0.0113,
+      "heldout": 0.0109
+    },
+    {
+      "step": 7000,
+      "tokens": 14338048,
+      "tokens_per_param": 1.3103,
+      "train_loss": 0.0128,
+      "heldout": 0.0128
+    },
+    {
+      "step": 7250,
+      "tokens": 14850048,
+      "tokens_per_param": 1.3571,
+      "train_loss": 0.0106,
+      "heldout": 0.019
+    },
+    {
+      "step": 7500,
+      "tokens": 15362048,
+      "tokens_per_param": 1.4039,
+      "train_loss": 0.0095,
+      "heldout": 0.0315
+    },
+    {
+      "step": 7750,
+      "tokens": 15874048,
+      "tokens_per_param": 1.4507,
+      "train_loss": 0.0143,
+      "heldout": 0.0524
+    },
+    {
+      "step": 8000,
+      "tokens": 16386048,
+      "tokens_per_param": 1.4975,
+      "train_loss": 0.0152,
+      "heldout": 0.0525
+    },
+    {
+      "step": 8250,
+      "tokens": 16898048,
+      "tokens_per_param": 1.5443,
+      "train_loss": 0.0097,
+      "heldout": 0.0962
+    },
+    {
+      "step": 8500,
+      "tokens": 17410048,
+      "tokens_per_param": 1.5911,
+      "train_loss": 0.0135,
+      "heldout": 0.1738
+    },
+    {
+      "step": 8750,
+      "tokens": 17922048,
+      "tokens_per_param": 1.6378,
+      "train_loss": 0.0109,
+      "heldout": 0.1436
+    },
+    {
+      "step": 8999,
+      "tokens": 18432000,
+      "tokens_per_param": 1.6844,
+      "train_loss": 0.0068,
+      "heldout": 0.2301
+    }
+  ],
+  "regime_call": {
+    "best_heldout": 0.0097,
+    "at_tokens_per_param": 1.1232,
+    "final_heldout": 0.2301,
+    "final_tokens_per_param": 1.6844,
+    "heldout_rose_after_best": true
+  }
+}

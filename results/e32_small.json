@@ -1,0 +1,119 @@
+{
+  "config": {
+    "bs": 8,
+    "block": 256,
+    "ctx": 256,
+    "dim": 128,
+    "layers": 2,
+    "heads": 2,
+    "lr": 0.0002,
+    "chars": 200000000,
+    "val_batches": 8,
+    "max_steps": 3000,
+    "probe_every": 250,
+    "device": "cuda",
+    "wait_free_gb": 2.0,
+    "out": "/root/qcc/review20260922/e32_small.json"
+  },
+  "model_params": 495104,
+  "rows": [
+    {
+      "step": 0,
+      "tokens": 2048,
+      "tokens_per_param": 0.0041,
+      "train_loss": 5.6269,
+      "heldout": 5.7439
+    },
+    {
+      "step": 250,
+      "tokens": 514048,
+      "tokens_per_param": 1.0383,
+      "train_loss": 2.7069,
+      "heldout": 9.0553
+    },
+    {
+      "step": 500,
+      "tokens": 1026048,
+      "tokens_per_param": 2.0724,
+      "train_loss": 2.5442,
+      "heldout": 9.4998
+    },
+    {
+      "step": 750,
+      "tokens": 1538048,
+      "tokens_per_param": 3.1065,
+      "train_loss": 2.6357,
+      "heldout": 10.175
+    },
+    {
+      "step": 1000,
+      "tokens": 2050048,
+      "tokens_per_param": 4.1406,
+      "train_loss": 2.5552,
+      "heldout": 9.7417
+    },
+    {
+      "step": 1250,
+      "tokens": 2562048,
+      "tokens_per_param": 5.1748,
+      "train_loss": 2.6289,
+      "heldout": 9.1748
+    },
+    {
+      "step": 1500,
+      "tokens": 3074048,
+      "tokens_per_param": 6.2089,
+      "train_loss": 2.4987,
+      "heldout": 9.1554
+    },
+    {
+      "step": 1750,
+      "tokens": 3586048,
+      "tokens_per_param": 7.243,
+      "train_loss": 2.617,
+      "heldout": 9.419
+    },
+    {
+      "step": 2000,
+      "tokens": 4098048,
+      "tokens_per_param": 8.2771,
+      "train_loss": 2.5899,
+      "heldout": 7.8762
+    },
+    {
+      "step": 2250,
+      "tokens": 4610048,
+      "tokens_per_param": 9.3113,
+      "train_loss": 2.5162,
+      "heldout": 7.4345
+    },
+    {
+      "step": 2500,
+      "tokens": 5122048,
+      "tokens_per_param": 10.3454,
+      "train_loss": 2.643,
+      "heldout": 6.0048
+    },
+    {
+      "step": 2750,
+      "tokens": 5634048,
+      "tokens_per_param": 11.3795,
+      "train_loss": 2.4592,
+      "heldout": 6.0348
+    },
+    {
+      "step": 2999,
+      "tokens": 6144000,
+      "tokens_per_param": 12.4095,
+      "train_loss": 3.9101,
+      "heldout": 3.8235
+    }
+  ],
+  "regime_call": {
+    "best_heldout": 3.8235,
+    "at_tokens_per_param": 12.4095,
+    "final_heldout": 3.8235,
+    "final_tokens_per_param": 12.4095,
+    "heldout_rose_after_best": false
+  }
+}
