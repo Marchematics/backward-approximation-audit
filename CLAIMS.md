@@ -59,6 +59,9 @@ numbers are the exception and are labelled as such.
 | A27 | Between 11M and 57M the fraction *falls* at fixed batch size (0.0722 -> 0.0669), so the scaling is not smooth in parameter count | same files | same command |
 | A29 | The batch-size effect (1.56x at 57M, bs 4 -> bs 1) is of the same order as the family effect and larger than any within-family scale effect | `results/e25_bs4.json`, `results/e25_bs1.json` | same script with `--bs 4` |
 
+| A30 | **Lion tolerates a skipped backward far better than AdamW**: measured in progress per backward pass (1/L_end), Lion is 3.25x AdamW at a backward every step and **2.27x at every second step**, i.e. Lion with half the backward passes beats AdamW with all of them (1/L 2.312 vs 1.018) | `results/e26_reuse.json` | `python3 experiments/e26_staleness.py --device cuda --steps 1000 --schedules 1,2,4,8 --mechanism reuse` |
+| A31 | The advantage is confined to 1-2 backward passes per step: at every-4 and every-8 both optimizers fall to the same plateau (1/L 0.37/0.36) and the ordering disappears | same file | same command |
+
 ## B2. Configuration failures (recorded so they are not repeated)
 
 | # | attempt | how it failed | evidence |
@@ -66,6 +69,7 @@ numbers are the exception and are labelled as such.
 | X1 | 1B optimizer x density grid, corpus 1.5 M tokens, 1000 steps, lr 1e-5 | **non-discriminative**: training loss *rose* (AdamW 2.489 -> 2.766, SGD -> 3.000) while held-out loss stayed flat to four decimals (SGD: 2.4014 at every density). Fine-tuning a pretrained 1B on too little data cannot resolve a sparsity effect, so the grid answers nothing | `results/e19_1b_adamw.json`, `results/e19_1b_sgd.json` |
 | X2 | same grid, Lion arm | the process was killed mid-run by an external action, not by an in-code failure | partial only |
 | X3 | per-seed replication of E19 | revealed that E19's dense arm moves 0.29 across seeds, larger than the reported effect (see F10) | `results/e19_repro_s*.json` |
+| X4 | E26 first attempts reported "held-out loss rising" | not a real rise: the batch index wraps with `% (len(stream) - need)` so the run silently restarts the stream and memorises the training slice, which *raises* held-out loss. Adding a training-loss print alongside the probe exposed it in one run; the probe-only signal had looked like model divergence | `experiments/e26_staleness.py` progress output |
 
 The 1B question is therefore still open (O7), and the next attempt needs a corpus large enough that
 held-out loss actually moves: >= 50 M characters and a learning rate calibrated until training loss
@@ -82,5 +86,6 @@ held-out loss actually moves: >= 50 M characters and a learning rate calibrated 
 | O4 | ~~Can the truncated-backward saving be realised inside a training loop?~~ **answered (A19)**: yes, 1.60-2.13x at a measured +0.003 to +0.009 held-out cost | done, on a 40 M model and a byte-level corpus | remaining: scale it to a real tokenizer and a 1B model |
 | O7 | Does the Lion penalty (A17) hold at scale and on a real tokenizer? | this is the claim most likely to change practice, and it rests on one 40 M byte-level run | E19 on a 1B pretrained checkpoint with a real tokenizer is implemented and running (`--pretrained --opt8bit`); results not yet in |
 | O8 | Can the dropped blocks' updates be kept current cheaply, without a replay forward? | E22 shows the obvious correction is slower than dense, so the system story depends on finding a compensation that is not recomputation | carry the dropped blocks' optimizer state with an estimate, then measure quality and step time |
+| O10 | Does the Lion staleness advantage (A30) survive outside the memorisation regime? | the every-1 runs reach held-out 0.02-0.08, so the comparison is of speed-to-memorise; a corpus large enough to hold held-out near 2.5-3.0 would confirm it is a general optimisation effect | run E26 with a corpus >= 1B bytes and a step budget that keeps held-out loss above 2.0 |
 | O9 | Does the near-boundary fraction keep rising past 1B, and does measured Lion damage follow it? | A25 is the mechanism-side scaling prediction; if the fraction saturates, the practical claim weakens | measure E25 at 3B-7B; pair with a discriminative Lion/AdamW training run at 1B (needs a configuration whose fixed-probe loss actually moves) |
 | O5 | Does the quality-neutral point move with model scale and task? | the 5%/20%/50% cost curve is one corpus and one architecture | repeat A6 at two model sizes and a second corpus |

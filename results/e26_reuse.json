@@ -1,0 +1,195 @@
+{
+  "config": {
+    "steps": 1000,
+    "probe_every": 100,
+    "val_batches": 8,
+    "bs": 8,
+    "block": 256,
+    "ctx": 256,
+    "dim": 384,
+    "layers": 6,
+    "heads": 6,
+    "b1": 0.9,
+    "b2": 0.95,
+    "eps": 1e-08,
+    "lr_map": "adamw=2e-4,lion=1e-4",
+    "optimizers": "adamw,lion",
+    "schedules": "1,2,4,8",
+    "mechanism": "reuse",
+    "chars": 60000000,
+    "device": "cuda",
+    "wait_free_gb": 2.0,
+    "out": "/root/qcc/review20260922/e26_reuse.json",
+    "lr": 0.0001
+  },
+  "runs": [
+    {
+      "optimizer": "adamw",
+      "backward_every": 1,
+      "mechanism": "reuse",
+      "probe_start": 5.1936,
+      "probe_end": 0.076,
+      "probe_curve": [
+        5.1936,
+        2.896,
+        2.7882,
+        2.708,
+        2.6486,
+        2.6727,
+        2.6436,
+        2.4978,
+        1.4848,
+        0.3358,
+        0.076
+      ],
+      "sec": 22.1
+    },
+    {
+      "optimizer": "adamw",
+      "backward_every": 2,
+      "mechanism": "reuse",
+      "probe_start": 5.1936,
+      "probe_end": 0.9824,
+      "probe_curve": [
+        5.1936,
+        2.9464,
+        2.7935,
+        2.7304,
+        2.7157,
+        2.719,
+        2.7003,
+        2.7448,
+        2.6393,
+        2.0873,
+        0.9824
+      ],
+      "sec": 16.8
+    },
+    {
+      "optimizer": "adamw",
+      "backward_every": 4,
+      "mechanism": "reuse",
+      "probe_start": 5.1936,
+      "probe_end": 2.6978,
+      "probe_curve": [
+        5.1936,
+        3.0002,
+        2.859,
+        2.8021,
+        2.8041,
+        2.7856,
+        2.732,
+        2.7742,
+        2.7717,
+        2.7037,
+        2.6978
+      ],
+      "sec": 14.2
+    },
+    {
+      "optimizer": "adamw",
+      "backward_every": 8,
+      "mechanism": "reuse",
+      "probe_start": 5.1936,
+      "probe_end": 2.7839,
+      "probe_curve": [
+        5.1936,
+        3.2879,
+        3.1287,
+        3.0465,
+        2.9831,
+        2.9043,
+        2.8741,
+        2.8636,
+        2.8874,
+        2.823,
+        2.7839
+      ],
+      "sec": 13.0
+    },
+    {
+      "optimizer": "lion",
+      "backward_every": 1,
+      "mechanism": "reuse",
+      "probe_start": 5.4407,
+      "probe_end": 0.0234,
+      "probe_curve": [
+        5.4407,
+        2.9226,
+        2.7954,
+        2.722,
+        2.6391,
+        2.6474,
+        2.3648,
+        1.2655,
+        0.1895,
+        0.0351,
+        0.0234
+      ],
+      "sec": 19.2
+    },
+    {
+      "optimizer": "lion",
+      "backward_every": 2,
+      "mechanism": "reuse",
+      "probe_start": 5.4407,
+      "probe_end": 0.4325,
+      "probe_curve": [
+        5.4407,
+        3.0017,
+        2.8027,
+        2.7343,
+        2.7094,
+        2.7255,
+        2.7093,
+        2.7056,
+        2.3952,
+        1.4944,
+        0.4325
+      ],
+      "sec": 13.4
+    },
+    {
+      "optimizer": "lion",
+      "backward_every": 4,
+      "mechanism": "reuse",
+      "probe_start": 5.4407,
+      "probe_end": 2.7156,
+      "probe_curve": [
+        5.4407,
+        3.089,
+        2.8539,
+        2.8067,
+        2.7916,
+        2.7978,
+        2.7414,
+        2.781,
+        2.7622,
+        2.7026,
+        2.7156
+      ],
+      "sec": 10.5
+    },
+    {
+      "optimizer": "lion",
+      "backward_every": 8,
+      "mechanism": "reuse",
+      "probe_start": 5.4407,
+      "probe_end": 2.7606,
+      "probe_curve": [
+        5.4407,
+        3.2379,
+        3.0674,
+        2.9221,
+        2.8914,
+        2.8526,
+        2.8404,
+        2.8307,
+        2.8368,
+        2.8102,
+        2.7606
+      ],
+      "sec": 9.0
+    }
+  ]
+}

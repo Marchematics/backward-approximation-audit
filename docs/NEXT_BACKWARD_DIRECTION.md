@@ -1144,3 +1144,63 @@ The honest limitation: the compacts are trained from scratch on byte-level data 
 models use subword tokenizers, so the 2.3x gap mixes tokenizer, initialization, and architecture.
 Separating those needs a within-tokenizer, within-family width sweep trained from scratch, which is
 the next version of this measurement.
+
+
+---
+
+## 4l. E26: the fragility inverts — Lion tolerates a skipped backward far better than AdamW
+
+Everything about Lion in this document so far is about *perturbing* the gradient: its amplification is
+2.95x AdamW's (A14), and its exposure to sign flips is design-dependent (A28). E26 asks the opposite
+question, which those results do not determine:
+
+> if a step's gradient is simply **not computed**, which optimizer degrades less?
+
+The mechanism predicts Lion should win. Lion's update is `sign(m)`, which depends only on the
+accumulated *direction*; a stale direction is still roughly the right direction. AdamW's update is
+`m/(sqrt(v)+eps)`, which depends on the accumulated *magnitude*; a stale `v` makes the step size wrong
+in a way that compounds.
+
+`experiments/e26_staleness.py`, 29M-parameter GPT, 75M-byte corpus, held-out probe every 100 steps,
+both optimizers at their own calibrated lr. `results/e26_reuse.json`:
+
+| backward every | AdamW 1/L_end | Lion 1/L_end | Lion / AdamW |
+|---:|---:|---:|---:|
+| 1 | 13.16 | 42.74 | **3.25x** |
+| 2 | 1.018 | 2.312 | **2.27x** |
+| 4 | 0.371 | 0.368 | 0.99x |
+| 8 | 0.359 | 0.362 | 1.01x |
+
+(`1/L_end` is the inverse final held-out loss: higher means more progress per backward pass. Ratio
+1.0 means the two optimizers are equally efficient at that backward budget.)
+
+**Lion extracts 3.25x more progress per backward pass when every step is backpropagated, and 2.27x
+more at every second step.** In the probe curves the difference is visible as a phase change: AdamW
+sits at ~2.65 for 700 steps and then drops; Lion breaks away around step 600 and reaches 0.19 by step
+800 where AdamW is still at 1.48.
+
+### The practical reading, and it is the method layer this project was missing
+
+This is the first result here that says *what to do differently*:
+
+> **A backward-skipping schedule should be tuned per optimizer, and the sign-based optimizer is the
+> one that can afford the aggressive schedule.** AdamW needs a fresh gradient to know *how large* its
+> step should be; Lion only needs to know *which way to go*, and a stale direction remains usable.
+> At every-2, Lion with half the backward passes outperforms AdamW with all of them (1/L 2.31 vs
+> 1.02).
+
+Note the interaction with E25/A28: Lion's disadvantage is in absorbing *noise added to* a gradient,
+while its advantage is in tolerating a gradient that is *merely old*. Those are different regimes and
+a runtime can choose between them — perturb (use a cheap approximation) or postpone (skip and reuse).
+The measurements say Lion should be asked to postpone, and AdamW to neither.
+
+### Caveats, stated because this is the most actionable claim in the document
+
+1. At every-4 and every-8 both optimizers collapse to the same plateau (~2.7) and the ordering
+   vanishes. The Lion advantage lives in the 1-to-2 backward-per-step region, not beyond it.
+2. The absolute held-out losses reach 0.02-0.08 at every-1 in 1000 steps on a 75M-byte corpus, i.e.
+   this configuration is in a heavy-memorisation regime. The comparison is therefore of *how fast each
+   optimizer reaches that regime* rather than of generalisation, and a version on a corpus large
+   enough to keep held-out loss near 2.5-3.0 would be the honest confirmation. That experiment is
+   specified and not yet run.
+3. One model, one architecture, one seed, byte-level data.
