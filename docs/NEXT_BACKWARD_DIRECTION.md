@@ -1461,3 +1461,57 @@ monotone in the dropped fraction: 0.53x (drop 67% of L=6) -> 0.85x (drop 67% of 
 This is recorded as a correction to 5b, not as a headline: the honest summary is that the
 gradient-correct variant is viable but its advantage over dense is in the 1.0-1.2x band, an order of
 magnitude less than what the naive variant appears to deliver by not training its parameters.
+
+
+---
+
+## 5d. O14: the A38 crossover does not survive seeding — and the wall-clock noise floor is the reason
+
+A38 said the gradient-correct replay reaches 1.02-1.23x at L=24 keeping 2 of 24 blocks. It came from
+one depth and one seed. Under the two-axis protocol (3 seeds x 2 depths, keep = L/12 in both):
+
+| depth | seed | dense ms | naive skip | skip_ri (gradient-correct) | skip_ri cost |
+|---|---:|---:|---:|---:|---:|
+| L=24 | 0 | 260.4 | 4.54x | **1.05x** | +0.063 |
+| L=24 | 1 | 146.7 | 3.63x | **0.84x** | +0.014 |
+| L=24 | 2 | 146.9 | 3.63x | **0.84x** | +0.026 |
+| L=48 | 0 | 294.7 | 3.67x | **0.84x** | +0.042 |
+| L=48 | 1 | 295.5 | 3.66x | **0.84x** | +0.023 |
+| L=48 | 2 | 295.6 | 3.67x | **0.58x** | +0.016 |
+
+**A38 is withdrawn.** The 1.02-1.23x band came from seed 0 at L=24 (1.05x here); the same
+configuration at seeds 1 and 2 gives 0.84x, and at L=48 it never reaches 1.0x at all. The
+skip_ri cost also spans +0.014 to +0.063 across seeds, i.e. a factor of 4.5 on an effect of 0.02-0.06.
+
+### The generalisable finding is about the measurement floor, not the mechanism
+
+The dense baseline itself was measured at 260.4 ms and 146.7 ms for the *same* configuration at
+different seeds — a 1.77x spread from GPU contention on a shared card. So:
+
+> **On this hardware the wall-clock noise floor is roughly +/-40-80%, while the effect being claimed
+> is ~1.1x. No speedup claim in the 1.0-1.3x band is measurable here at all**, no matter how many
+> seeds are run, because the noise enters through the shared GPU rather than through the model.
+
+This is the same failure mode as the quality-side regime problem (A34), one level down: there the
+noise came from crossing the memorisation boundary, here from a contended device. In both cases the
+remedy is not more seeds but a different measurement environment.
+
+What survives from the whole speedup line, stated at the resolution the hardware supports:
+
+* **Naive graph skip (frozen dropped parameters) is 3.6-4.5x faster than dense** at keep = L/12 on
+  L=24/48 — a large, consistent effect, well above the noise floor, reproduced at 6 runs.
+* **Gradient-correct replay is ~0.6-1.05x**, i.e. indistinguishable from dense given the floor.
+  It is not *shown* to be slower; it is not shown to be faster either.
+* The earlier claim that replay is structurally slower than dense (5b) remains withdrawn, but the
+  replacement (A38's crossover) is also withdrawn. The honest position is that the gradient-correct
+  variant's wall-clock is unresolved on this hardware.
+
+### Sixth withdrawal, and the pattern is now the finding
+
+F10 (E19 quality), F11 (E25 scale), F12 (E26 staleness), F13 (A14 amplification), A21/A38 (E22/E30
+speedup) — every one is a case of an effect below the noise floor of its measurement, and the floors
+are of two kinds only: *training regime* (quality claims) and *device contention* (wall-clock claims).
+
+That is a citable methodological result in its own right, and it is the most defensible thing this
+project has produced: **a specification of what cannot be measured on a single shared mid-range GPU,
+with the measurements that demonstrate each floor.**
